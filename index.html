@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#12151c">
 <title>Vlot — Vlaams four-skill trainer</title>
 <style>
 :root{
@@ -96,6 +98,20 @@ label.tog{display:flex;align-items:center;justify-content:space-between;padding:
 .sctrl{display:flex;align-items:center;gap:8px;margin-top:14px}
 .sctrl .btn{padding:11px 6px;font-size:14px}
 audio{width:100%;margin-top:10px}
+.wno{cursor:pointer}
+.tipbox{margin-top:12px;padding:12px 14px;background:var(--ink3);border:1px solid var(--line);border-radius:12px;font-size:14.5px}
+.tipbox b{color:var(--leeuw)}
+.troublechips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tchip{font-size:13px;font-weight:700;padding:6px 12px;border-radius:99px;background:rgba(224,82,82,.12);border:1px solid var(--klaproos);color:var(--paper)}
+.labcard{margin-top:12px;background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.labcard.hot{border-color:var(--klaproos)}
+.labhead{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left}
+.labhead .sound{font-size:24px;font-weight:800;color:var(--leeuw)}
+.labbody{display:none;margin-top:10px}
+.labcard.open .labbody{display:block}
+.exword{display:inline-flex;align-items:center;gap:6px;background:var(--ink3);border:1px solid var(--line);border-radius:99px;padding:7px 13px;margin:4px 6px 0 0;font-size:15px;font-weight:600}
+.okmark{color:var(--weide);font-weight:800}
+.badmark{color:var(--klaproos);font-weight:800}
 </style>
 </head>
 <body>
@@ -116,10 +132,12 @@ audio{width:100%;margin-top:10px}
   <div class="card">
     <div class="eyebrow">Jouw vaardigheden</div>
     <div class="diamond" id="diamond"></div>
+    <div id="troublezone"></div>
   </div>
   <div class="foot">
     <button class="btn primary" id="btn-session" onclick="startSession()">Start sessie</button>
     <button class="btn" onclick="openShadowPick()">Schaduwstudio &mdash; luister &amp; spreek na</button>
+    <button class="btn" onclick="renderLab();go('lab')">Uitspraaklab &mdash; de moeilijke klanken</button>
     <button class="btn ghost" onclick="renderUnits();go('units')">Blader door de eenheden</button>
   </div>
 </div>
@@ -186,6 +204,14 @@ audio{width:100%;margin-top:10px}
     <div id="sh-audio"></div>
     <p class="tiny">Record yourself, then play your version right after the model — the gap you hear is exactly what to fix next.</p>
   </div>
+</div>
+
+<!-- PRONUNCIATION LAB -->
+<div class="screen" id="scr-lab">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Uitspraaklab</div>
+  <p class="sub">The Dutch sounds that trip up learners. Sounds the app has caught you struggling with float to the top with a red border. Tap a sound, listen to the example words, then say them with the mic until you get the check mark.</p>
+  <div id="labzone"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -413,7 +439,7 @@ COURSE.units.forEach(u=>u.items.forEach(it=>{ITEMS[it.id]=it; UNITOF[it.id]=u;})
 const ORDER=COURSE.units.flatMap(u=>u.items.map(i=>i.id));
 
 let S=load();
-function blank(){return {xp:0,streak:{n:0,last:null},items:{},set:{rate:80,acc:true,perNew:6}};}
+function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},set:{rate:80,acc:true,perNew:6}};}
 function load(){
   try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items) return Object.assign(blank(),o);}}catch(e){}
   return blank();
@@ -546,6 +572,11 @@ function renderHome(){
   b.textContent = due? ('Start sessie · '+due+' herhalingen'+(nn?' + nieuw':'')) : (nn? 'Start sessie · '+nn+' nieuwe zinnen' : 'Alles geleerd voor nu 🎉');
   b.disabled = !due && !nn;
   drawDiamond();
+  const top=Object.entries(S.trouble||{}).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  document.getElementById('troublezone').innerHTML = top.length
+    ? '<div class="eyebrow" style="margin-top:10px">Moeilijke klanken</div><div class="troublechips">'+
+      top.map(e=>'<button class="tchip" onclick="renderLab();go(\'lab\')">'+esc((PRON.find(p=>p.k===e[0])||{name:e[0]}).name)+'</button>').join('')+'</div>'
+    : '';
   const tb=document.getElementById('ttsbanner');
   if(!('speechSynthesis' in window))
     tb.innerHTML='<div class="banner"><b>Geen audio hier.</b> Download this file and open it directly in Chrome — speech only works outside the preview.</div>';
@@ -750,10 +781,15 @@ function renderSpeak(it,ex){
 function showSpokenVerdict(id,txt){
   const r=lcsMark(ITEMS[id].nl,wordsOf(txt));
   const {mark,T,score}=r;
+  const missed=T.filter((w,i)=>!mark[i]);
+  if(score<0.85){ missed.forEach(troubleBump); save(); }
   document.getElementById('heard').innerHTML=
     '<div class="verdict '+(score>=0.85?'good':(score>=0.55?'near':'bad'))+'">'+
-    'Gehoord: “'+esc(txt)+'”<div class="target">'+T.map((w,i)=>'<span class="'+(mark[i]?'wok':'wno')+'">'+esc(w)+'</span>').join(' ')+'</div>'+
-    '<div class="tiny">'+Math.round(score*100)+'% van de woorden herkend'+(score>=0.85?' — kies “Goed” of “Vlot”!':score>=0.55?' — nog eens proberen of “Moeizaam”.':' — beluister het model en probeer opnieuw.')+'</div></div>';
+    'Gehoord: “'+esc(txt)+'”<div class="target">'+T.map((w,i)=>mark[i]
+      ? '<span class="wok">'+esc(w)+'</span>'
+      : '<span class="wno" onclick="wordDrill(\''+id+'\',\''+w+'\')">'+esc(w)+'</span>').join(' ')+'</div>'+
+    '<div class="tiny">'+Math.round(score*100)+'% van de woorden herkend'+(score>=0.85?' — kies “Goed” of “Vlot”!':' — tik op een rood woord voor uitspraakhulp.')+'</div></div>'+
+    '<div id="drill"></div>';
   return score;
 }
 let vtTimer=null;
@@ -794,6 +830,86 @@ function toggleRecog(id){
     };
     recog.start();
   }catch(e){ recogFailed=true; mountVoiceField(id); }
+}
+
+
+/* ================= pronunciation coaching ================= */
+const PRON=[
+ {k:'sch',re:/sch/,name:'sch',tip:'Een "s" en dan meteen de zachte "ch": s-ch. Op het einde van een woord (Belgisch) klinkt het gewoon als "-s".'},
+ {k:'ui',re:/ui/,name:'ui',tip:'De klank die het Engels niet heeft: rond uw lippen alsof ge "oe" gaat zeggen, maar zeg "a-ee" er doorheen. Traag imiteren werkt het best.'},
+ {k:'ij',re:/ij|ei/,name:'ij / ei',tip:'Klinkt als de "ay" in het Engelse "say", maar iets opener. "ij" en "ei" klinken exact hetzelfde.'},
+ {k:'eu',re:/eu/,name:'eu',tip:'Zeg "ee" en rond dan uw lippen — zoals in het Franse "deux".'},
+ {k:'oe',re:/oe/,name:'oe',tip:'Zoals "oo" in het Engelse "boot", maar korter en strakker.'},
+ {k:'uu',re:/uu/,name:'uu',tip:'Zeg "ee" met stevig geronde lippen — de Franse "u" in "tu".'},
+ {k:'aa',re:/aa/,name:'aa',tip:'Een lange, open "ah" — zoals bij de dokter: "aaa". Houd hem echt lang.'},
+ {k:'ee',re:/ee/,name:'ee',tip:'Zoals "ay" in het Engelse "day", maar zonder de "j"-glijklank op het einde. Strak afsnijden.'},
+ {k:'oo',re:/oo/,name:'oo',tip:'Zoals "o" in het Engelse "go", maar zonder de "w"-glijklank op het einde.'},
+ {k:'ou',re:/ou|au/,name:'ou / au',tip:'Zoals "ow" in het Engelse "now". "ou" en "au" klinken hetzelfde.'},
+ {k:'g',re:/g|ch/,name:'g / ch',tip:'De Vlaamse g is z&aacute;cht: een lichte wrijving achteraan de mond, bijna een zware "h". Veel zachter dan de harde Hollandse g.'},
+ {k:'w',re:/w/,name:'w',tip:'Tussen de Engelse "v" en "w" in: de boventanden raken heel licht de onderlip.'},
+ {k:'v',re:/v/,name:'v',tip:'In Vlaanderen klinkt de "v" vaak halfweg naar een "f" — zachter dan de Engelse v.'},
+ {k:'j',re:/j(?!e\b)/,name:'j',tip:'Gewoon de Engelse "y" van "yes" — nooit de Engelse "dzj"-klank.'},
+ {k:'en',re:/en$/,name:'-en (einde)',tip:'De eind-n valt in vlot Vlaams meestal weg: "lopen" klinkt als "lope", "eten" als "ete".'},
+ {k:'r',re:/r/,name:'r',tip:'De Vlaamse r is meestal gerold met de tongpunt (zoals in het Spaans). Een korte tik tegen de tanden is genoeg.'}
+];
+function tipsFor(word){ return PRON.filter(p=>p.re.test(word)).slice(0,2); }
+function troubleBump(word){
+  tipsFor(word).forEach(p=>{ S.trouble[p.k]=(S.trouble[p.k]||0)+1; });
+}
+function labExamples(p){
+  const out=[], seen=new Set();
+  for(const id of ORDER){ for(const w of wordsOf(ITEMS[id].nl)){
+    if(w.length>2 && p.re.test(w) && !seen.has(w)){ seen.add(w); out.push(w); if(out.length>=4) return out; }
+  }} return out;
+}
+function renderLab(){
+  const top=Object.entries(S.trouble).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  const sorted=PRON.slice().sort((a,b)=>(top.includes(b.k)?1:0)-(top.includes(a.k)?1:0));
+  document.getElementById('labzone').innerHTML=sorted.map(p=>{
+    const hot=top.includes(p.k);
+    const ex=labExamples(p);
+    return '<div class="labcard'+(hot?' hot':'')+'" id="lab-'+p.k+'">'+
+     '<button class="labhead" onclick="document.getElementById(\'lab-'+p.k+'\').classList.toggle(\'open\')">'+
+     '<span class="sound">'+p.name+'</span>'+(hot?'<span class="tchip">oefenen!</span>':'<span class="chev">&#8250;</span>')+'</button>'+
+     '<div class="labbody"><p style="font-size:14.5px">'+p.tip+'</p><div>'+
+     ex.map(w=>'<span class="exword">'+esc(w)+
+       ' <button onclick="speak(\''+w+'\',60)">&#128266;</button>'+
+       ' <button onclick="micWord(\''+w+'\',\'lr-'+p.k+'-'+w+'\')">&#127908;</button>'+
+       ' <span id="lr-'+p.k+'-'+w+'"></span></span>').join('')+
+     '</div></div></div>';
+  }).join('');
+}
+let wrec=null;
+function micWord(word,resId){
+  const out=document.getElementById(resId);
+  if(!SR){ out.innerHTML='<span class="badmark">geen mic</span>'; return; }
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  try{ if(wrec) wrec.abort(); }catch(e){}
+  out.textContent='…';
+  wrec=new SR();
+  wrec.lang=(VOICE&&/be/i.test(VOICE.lang))?'nl-BE':'nl-NL';
+  wrec.interimResults=false; wrec.maxAlternatives=5;
+  wrec.onerror=()=>{ out.innerHTML='<span class="badmark">?</span>'; };
+  wrec.onresult=ev=>{
+    let hit=false;
+    const alts=ev.results[0];
+    for(let i=0;i<alts.length && !hit;i++)
+      for(const t of wordsOf(alts[i].transcript))
+        if(t===word || lev(t,word)<=1){ hit=true; break; }
+    out.innerHTML=hit?'<span class="okmark">&#10003;</span>':'<span class="badmark">&#10007; probeer traag</span>';
+    if(!hit) speak(word,55);
+  };
+  wrec.start();
+}
+function wordDrill(id,word){
+  const box=document.getElementById('drill');
+  if(!box) return;
+  const tips=tipsFor(word);
+  box.innerHTML='<div class="tipbox"><b>'+esc(word)+'</b> — luister traag en zeg het na:'+
+   ' <button class="speakbtn small" onclick="speak(\''+word+'\',55)">&#128034;</button>'+
+   (SR?' <button class="speakbtn small" onclick="micWord(\''+word+'\',\'drillres\')">&#127908;</button> <span id="drillres"></span>':'')+
+   tips.map(t=>'<div class="tiny" style="margin-top:8px"><b>'+t.name+':</b> '+t.tip+'</div>').join('')+'</div>';
+  speak(word,55);
 }
 
 /* ================= units browser ================= */

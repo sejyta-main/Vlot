@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Vlot — Vlaams four-skill trainer</title>
+<style>
+:root{
+  --ink:#12151c; --ink2:#1b202b; --ink3:#242b39;
+  --paper:#f1ecdf; --dim:#8d95a5; --line:#2a3140;
+  --leeuw:#f2c319; --klaproos:#e05252; --weide:#5fae6c; --lucht:#6ba3d6;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--ink);color:var(--paper);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:17px;line-height:1.45;overscroll-behavior:none}
+#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:14px 16px 28px}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:600}
+h1.logo{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--paper)}
+h1.logo span{color:var(--leeuw)}
+.sub{color:var(--dim);font-size:14px;margin-top:4px}
+.card{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.btn{display:block;width:100%;padding:15px;border-radius:14px;font-weight:700;font-size:17px;text-align:center;border:1px solid var(--line);background:var(--ink3);color:var(--paper)}
+.btn.primary{background:var(--leeuw);color:#191405;border-color:var(--leeuw)}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.4}
+.btn+.btn{margin-top:10px}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;min-height:34px}
+.back{color:var(--dim);font-size:15px;font-weight:600;padding:6px 8px 6px 0}
+.pill{font-size:12px;font-weight:700;color:var(--ink);background:var(--leeuw);border-radius:99px;padding:3px 10px}
+.statrow{display:flex;gap:10px;margin-top:14px}
+.stat{flex:1;background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;text-align:center}
+.stat b{display:block;font-size:24px;font-weight:800;color:var(--leeuw)}
+.stat span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+/* skill diamond */
+.diamond{display:flex;justify-content:center;margin:6px 0 2px}
+.dlab{font-size:11px;letter-spacing:.14em;text-transform:uppercase;fill:var(--dim);font-weight:600}
+/* session */
+.progress{height:5px;background:var(--ink3);border-radius:99px;overflow:hidden;flex:1;margin:0 12px}
+.progress i{display:block;height:100%;background:var(--leeuw);border-radius:99px;transition:width .3s}
+.skillchip{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:4px 11px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}
+.skillchip.L{color:var(--lucht);border-color:var(--lucht)}
+.skillchip.D{color:var(--weide);border-color:var(--weide)}
+.skillchip.P{color:var(--leeuw);border-color:var(--leeuw)}
+.skillchip.S{color:var(--klaproos);border-color:var(--klaproos)}
+.prompt{font-size:15px;color:var(--dim);margin-top:16px}
+.big{font-size:27px;font-weight:800;letter-spacing:-.01em;line-height:1.25;margin-top:8px}
+.mid{font-size:19px;margin-top:8px}
+.note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--leeuw);background:var(--ink2);border-radius:0 12px 12px 0;font-size:14.5px;color:var(--paper)}
+.note b{color:var(--leeuw)}
+.speakbtn{display:inline-flex;align-items:center;gap:8px;background:var(--ink3);border:1px solid var(--line);border-radius:99px;padding:10px 18px;font-weight:700;font-size:15px;margin-top:14px;margin-right:8px}
+.speakbtn.small{padding:8px 14px;font-size:13.5px}
+input[type=text], textarea{width:100%;background:var(--ink3);border:1.5px solid var(--line);border-radius:12px;color:var(--paper);font:inherit;padding:13px 14px;margin-top:14px}
+input[type=text]:focus, textarea:focus{outline:none;border-color:var(--leeuw)}
+.opt{display:block;width:100%;text-align:left;background:var(--ink3);border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;margin-top:10px;font-size:16.5px;color:var(--paper)}
+.opt.right{border-color:var(--weide);background:rgba(95,174,108,.14)}
+.opt.wrong{border-color:var(--klaproos);background:rgba(224,82,82,.12)}
+.verdict{margin-top:16px;padding:14px;border-radius:12px;font-size:15.5px}
+.verdict.good{background:rgba(95,174,108,.14);border:1px solid var(--weide)}
+.verdict.near{background:rgba(242,195,25,.1);border:1px solid var(--leeuw)}
+.verdict.bad{background:rgba(224,82,82,.1);border:1px solid var(--klaproos)}
+.verdict .target{font-size:19px;font-weight:700;margin-top:6px}
+.wok{color:var(--weide);font-weight:700}
+.wno{color:var(--klaproos);font-weight:700;text-decoration:underline dotted}
+.foot{margin-top:auto;padding-top:20px}
+.gradebar{display:flex;gap:8px;margin-top:auto;padding-top:20px}
+.gradebar .btn{padding:13px 4px;font-size:14.5px}
+.g0{color:var(--klaproos)!important}
+.g3{color:var(--leeuw)!important}
+.g4{color:var(--weide)!important}
+.mic{width:84px;height:84px;border-radius:50%;background:var(--klaproos);color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;margin:22px auto 4px;border:none;box-shadow:0 0 0 0 rgba(224,82,82,.5)}
+.mic.rec{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(224,82,82,.5)}70%{box-shadow:0 0 0 22px rgba(224,82,82,0)}100%{box-shadow:0 0 0 0 rgba(224,82,82,0)}}
+.miclab{text-align:center;color:var(--dim);font-size:13.5px}
+.heard{margin-top:14px;font-size:18px;line-height:1.5}
+.listitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 2px;border-bottom:1px solid var(--line)}
+.listitem:last-child{border-bottom:none}
+.listitem .t{font-weight:700;font-size:16.5px}
+.listitem .s{color:var(--dim);font-size:13.5px;margin-top:2px}
+.chev{color:var(--dim)}
+.banner{background:rgba(224,82,82,.12);border:1px solid var(--klaproos);border-radius:12px;padding:12px 14px;font-size:14px;margin-top:14px}
+.tiny{font-size:12.5px;color:var(--dim);margin-top:10px}
+.center{text-align:center}
+.range{width:100%;margin-top:10px;accent-color:var(--leeuw)}
+label.tog{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);font-size:15.5px}
+.done-big{font-size:56px;text-align:center;margin-top:40px}
+.hidden{display:none!important}
+.shadowline{font-size:23px;font-weight:800;line-height:1.35;margin-top:10px;min-height:64px}
+.shadowen{color:var(--dim);font-size:15px;margin-top:6px}
+.sctrl{display:flex;align-items:center;gap:8px;margin-top:14px}
+.sctrl .btn{padding:11px 6px;font-size:14px}
+audio{width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div class="screen" id="scr-home">
+  <div class="topbar">
+    <div><div class="eyebrow">Vlaams &middot; vier vaardigheden</div><h1 class="logo">Vlot<span>.</span></h1></div>
+    <button class="back" onclick="go('settings')">&#9881;</button>
+  </div>
+  <div id="ttsbanner"></div>
+  <div class="statrow">
+    <div class="stat"><b id="st-streak">0</b><span>dagen streak</span></div>
+    <div class="stat"><b id="st-xp">0</b><span>xp</span></div>
+    <div class="stat"><b id="st-due">0</b><span>te herhalen</span></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Jouw vaardigheden</div>
+    <div class="diamond" id="diamond"></div>
+  </div>
+  <div class="foot">
+    <button class="btn primary" id="btn-session" onclick="startSession()">Start sessie</button>
+    <button class="btn" onclick="openShadowPick()">Schaduwstudio &mdash; luister &amp; spreek na</button>
+    <button class="btn ghost" onclick="renderUnits();go('units')">Blader door de eenheden</button>
+  </div>
+</div>
+
+<!-- SESSION -->
+<div class="screen" id="scr-session">
+  <div class="topbar">
+    <button class="back" onclick="quitSession()">&#10005;</button>
+    <div class="progress"><i id="sess-prog"></i></div>
+    <span class="pill" id="sess-xp">+0</span>
+  </div>
+  <div id="ex" style="display:flex;flex-direction:column;flex:1"></div>
+</div>
+
+<!-- UNITS -->
+<div class="screen" id="scr-units">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">12 eenheden &middot; 156 zinnen</div>
+  <div class="card" id="unitlist"></div>
+</div>
+
+<!-- UNIT DETAIL -->
+<div class="screen" id="scr-unit">
+  <div class="topbar"><button class="back" onclick="go('units')">&#8592; Eenheden</button></div>
+  <div id="unitdetail"></div>
+</div>
+
+<!-- SHADOW PICK -->
+<div class="screen" id="scr-shadowpick">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Schaduwstudio</div>
+  <p class="sub">Pick a unit, then echo each sentence out loud in rhythm with the voice. Start with the text visible; once it feels easy, hide it and shadow by ear alone.</p>
+  <div class="card" id="shadowunits"></div>
+</div>
+
+<!-- SHADOW -->
+<div class="screen" id="scr-shadow">
+  <div class="topbar">
+    <button class="back" onclick="stopShadow();openShadowPick()">&#8592;</button>
+    <div class="eyebrow" id="sh-title"></div>
+    <span class="pill" id="sh-count"></span>
+  </div>
+  <div class="card">
+    <div class="shadowline" id="sh-nl"></div>
+    <div class="shadowen" id="sh-en"></div>
+  </div>
+  <div class="sctrl">
+    <button class="btn" onclick="shPrev()">&#8592;</button>
+    <button class="btn primary" style="flex:2" id="sh-play" onclick="shPlay()">&#9654; Speel</button>
+    <button class="btn" onclick="shNext()">&#8594;</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn" id="sh-texttog" onclick="shToggleText()">Verberg tekst</button>
+    <button class="btn" id="sh-loop" onclick="shToggleLoop()">Herhaal: uit</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Tempo <span id="sh-ratelab"></span></div>
+    <input type="range" class="range" id="sh-rate" min="55" max="110" step="5">
+    <div class="eyebrow" style="margin-top:16px">Neem uzelf op en vergelijk</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="sh-rec" onclick="shRecord()">&#9679; Opnemen</button>
+      <button class="btn" id="sh-playrec" onclick="shPlayRec()" disabled>Beluister</button>
+    </div>
+    <div id="sh-audio"></div>
+    <p class="tiny">Record yourself, then play your version right after the model — the gap you hear is exactly what to fix next.</p>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="scr-settings">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Instellingen</div>
+  <div class="card">
+    <label class="tog">Spreektempo <span id="set-ratelab"></span></label>
+    <input type="range" class="range" id="set-rate" min="55" max="110" step="5">
+    <label class="tog" style="margin-top:8px">Accenten negeren bij typen
+      <input type="checkbox" id="set-acc"></label>
+    <label class="tog">Nieuwe zinnen per sessie <span id="set-newlab"></span></label>
+    <input type="range" class="range" id="set-new" min="2" max="12" step="1">
+  </div>
+  <div class="card">
+    <div class="eyebrow">Voortgang bewaren</div>
+    <p class="tiny">Chrome can wipe local data for downloaded files. Export a backup now and then; import restores everything.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" onclick="doExport()">Exporteer</button>
+      <button class="btn" onclick="document.getElementById('imp').click()">Importeer</button>
+    </div>
+    <input type="file" id="imp" accept=".json" class="hidden" onchange="doImport(this)">
+    <button class="btn ghost g0" style="margin-top:14px" onclick="doReset()">Alles wissen</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">De methode</div>
+    <p class="tiny" style="margin-top:8px">Every sentence is trained as four separate skills — <b style="color:var(--lucht)">listening</b>, <b style="color:var(--weide)">dictation</b>, <b style="color:var(--leeuw)">writing</b> and <b style="color:var(--klaproos)">speaking</b> — each on its own spaced-repetition clock. The app always serves whatever is weakest, and it makes you produce Dutch, never just recognize it. Speaking climbs a ladder: shadow with text &rarr; shadow by ear &rarr; say it from the English alone.</p>
+  </div>
+</div>
+
+</div>
+<script>
+const COURSE = {
+units: [
+{id:"u1", title:"Kennismaking", en:"Meeting people", scene:"You arrive in Antwerp and meet your new neighbours.", items:[
+{id:"u1-01", nl:"Goeiedag!", en:"Hello! (Good day!)", note:"The everyday Flemish greeting — more common than 'hallo' in Flanders."},
+{id:"u1-02", nl:"Goeiemorgen, alles goed?", en:"Good morning, everything okay?"},
+{id:"u1-03", nl:"Ja, het gaat goed, en met u?", en:"Yes, I'm doing well, and you?", note:"Flemish speakers use 'u' far more than the Dutch — it's friendly, not stiff."},
+{id:"u1-04", nl:"Ik heet Carlos.", en:"My name is Carlos.", alt:["Mijn naam is Carlos."]},
+{id:"u1-05", nl:"Hoe heet gij?", en:"What's your name?", note:"'Gij/ge' is the informal 'you' you'll hear everywhere in Flanders.", alt:["Hoe heet je?","Hoe heet u?"]},
+{id:"u1-06", nl:"Aangenaam kennis te maken.", en:"Nice to meet you.", alt:["Aangenaam."]},
+{id:"u1-07", nl:"Waar komt ge vandaan?", en:"Where are you from?", alt:["Waar kom je vandaan?"]},
+{id:"u1-08", nl:"Ik woon in Antwerpen.", en:"I live in Antwerp."},
+{id:"u1-09", nl:"Spreekt ge Engels?", en:"Do you speak English?", alt:["Spreek je Engels?"]},
+{id:"u1-10", nl:"Ik spreek een beetje Nederlands.", en:"I speak a little Dutch."},
+{id:"u1-11", nl:"Kunt ge dat herhalen, alstublieft?", en:"Can you repeat that, please?", alt:["Kun je dat herhalen, alsjeblieft?"]},
+{id:"u1-12", nl:"Wat zegt ge?", en:"What did you say?", note:"Literally 'what say you' — the Flemish way to ask someone to repeat.", alt:["Wat zeg je?"]},
+{id:"u1-13", nl:"Merci!", en:"Thanks!", note:"Borrowed from French and used constantly in Flanders.", alt:["Dank u!","Bedankt!"]},
+{id:"u1-14", nl:"Graag gedaan.", en:"You're welcome."},
+{id:"u1-15", nl:"Tot straks!", en:"See you later!", alt:["Tot ziens!"]}
+]},
+{id:"u2", title:"In het café", en:"At the café", scene:"Friday evening on the Grote Markt — time for a drink.", items:[
+{id:"u2-01", nl:"Een tas koffie, alstublieft.", en:"A cup of coffee, please.", note:"'Tas' means cup in Flanders (the Dutch say 'kop')."},
+{id:"u2-02", nl:"Ik heb goesting in een pintje.", en:"I feel like having a beer.", note:"'Goesting' = craving/appetite; 'pintje' = a small draft beer. Two essential Flemish words."},
+{id:"u2-03", nl:"Wat wilt ge drinken?", en:"What would you like to drink?", alt:["Wat wil je drinken?"]},
+{id:"u2-04", nl:"Voor mij een cola zonder ijs.", en:"For me a cola without ice."},
+{id:"u2-05", nl:"Hebt ge ook thee?", en:"Do you also have tea?", alt:["Heb je ook thee?"]},
+{id:"u2-06", nl:"Mag ik de kaart zien?", en:"May I see the menu?"},
+{id:"u2-07", nl:"De rekening, alstublieft.", en:"The bill, please."},
+{id:"u2-08", nl:"Is deze plaats bezet?", en:"Is this seat taken?"},
+{id:"u2-09", nl:"Amai, dat is duur!", en:"Wow, that's expensive!", note:"'Amai' is the all-purpose Flemish exclamation of surprise."},
+{id:"u2-10", nl:"Het terras is vol.", en:"The terrace is full."},
+{id:"u2-11", nl:"Nog eentje, alstublieft.", en:"One more, please."},
+{id:"u2-12", nl:"Santé!", en:"Cheers!", note:"The Flemish toast (the Dutch say 'proost')."},
+{id:"u2-13", nl:"Waar is het toilet?", en:"Where is the toilet?"},
+{id:"u2-14", nl:"Ik betaal met de kaart.", en:"I'm paying by card."}
+]},
+{id:"u3", title:"Bij de bakker", en:"At the bakery", scene:"Sunday morning ritual: fresh bread and something sweet.", items:[
+{id:"u3-01", nl:"Twee pistolets, alstublieft.", en:"Two bread rolls, please.", note:"'Pistolet' — the classic round Belgian breakfast roll."},
+{id:"u3-02", nl:"Ik wil graag een wit brood.", en:"I would like a white loaf."},
+{id:"u3-03", nl:"Gesneden of niet gesneden?", en:"Sliced or unsliced?"},
+{id:"u3-04", nl:"Nog iets anders?", en:"Anything else?"},
+{id:"u3-05", nl:"Dat is alles, merci.", en:"That's all, thanks."},
+{id:"u3-06", nl:"Hoeveel kost dat?", en:"How much does that cost?"},
+{id:"u3-07", nl:"Dat is drie euro vijftig.", en:"That's three euros fifty."},
+{id:"u3-08", nl:"Hebt ge nog croissants?", en:"Do you still have croissants?", alt:["Heb je nog croissants?"]},
+{id:"u3-09", nl:"Ze zijn spijtig genoeg op.", en:"They're unfortunately sold out.", note:"'Spijtig' = unfortunate — Flanders' favourite word for 'jammer'."},
+{id:"u3-10", nl:"Een halve bruine, alstublieft.", en:"Half a brown loaf, please."},
+{id:"u3-11", nl:"De bakkerij is op zondag open.", en:"The bakery is open on Sunday."},
+{id:"u3-12", nl:"Ik neem ook een taartje mee.", en:"I'll also take a little cake.", note:"Flemish loves the -je/-ke diminutive: taartje, pintje, momentje."},
+{id:"u3-13", nl:"Alstublieft, en tot de volgende keer!", en:"Here you are, and until next time!"}
+]},
+{id:"u4", title:"De klok en afspraken", en:"Time & appointments", scene:"Making plans — and decoding Belgian clock times.", items:[
+{id:"u4-01", nl:"Hoe laat is het?", en:"What time is it?"},
+{id:"u4-02", nl:"Het is half acht.", en:"It's half past seven.", note:"Careful: 'half acht' = 7:30, NOT 8:30 — half **to** eight."},
+{id:"u4-03", nl:"We spreken af om kwart voor twee.", en:"We'll meet at a quarter to two."},
+{id:"u4-04", nl:"Ik ben te laat, sorry!", en:"I'm late, sorry!"},
+{id:"u4-05", nl:"De afspraak is morgen om tien uur.", en:"The appointment is tomorrow at ten o'clock."},
+{id:"u4-06", nl:"Komt dat goed uit?", en:"Does that suit you?"},
+{id:"u4-07", nl:"Nee, ik kan niet op maandag.", en:"No, I can't on Monday."},
+{id:"u4-08", nl:"Zullen we verzetten naar woensdag?", en:"Shall we move it to Wednesday?"},
+{id:"u4-09", nl:"De winkel sluit om zes uur.", en:"The shop closes at six o'clock."},
+{id:"u4-10", nl:"Ik ben er binnen vijf minuutjes.", en:"I'll be there in five little minutes.", note:"'Minuutjes' — the diminutive softens it, very Flemish."},
+{id:"u4-11", nl:"Ge zijt juist op tijd.", en:"You're right on time.", note:"'Ge zijt' = 'je bent' in Flanders; 'juist' = exactly/just.", alt:["Je bent precies op tijd."]},
+{id:"u4-12", nl:"Vandaag is het vrijdag.", en:"Today is Friday."},
+{id:"u4-13", nl:"Volgende week ben ik op verlof.", en:"Next week I'm on holiday.", note:"'Verlof' is what Flanders calls vacation ('vakantie' in NL)."}
+]},
+{id:"u5", title:"De weg vragen", en:"Asking the way", scene:"Lost in Ghent without a phone signal.", items:[
+{id:"u5-01", nl:"Excuseer, waar is het station?", en:"Excuse me, where is the station?", note:"'Excuseer' is the standard Flemish 'excuse me'."},
+{id:"u5-02", nl:"Ga rechtdoor en dan links.", en:"Go straight ahead and then left."},
+{id:"u5-03", nl:"Het is aan de rechterkant.", en:"It's on the right-hand side."},
+{id:"u5-04", nl:"Is het ver van hier?", en:"Is it far from here?"},
+{id:"u5-05", nl:"Nee, het is vijf minuten te voet.", en:"No, it's five minutes on foot."},
+{id:"u5-06", nl:"Ik ben verloren.", en:"I am lost."},
+{id:"u5-07", nl:"Kunt ge mij helpen?", en:"Can you help me?", alt:["Kun je me helpen?"]},
+{id:"u5-08", nl:"Neem de eerste straat rechts.", en:"Take the first street on the right."},
+{id:"u5-09", nl:"Het staat recht tegenover de kerk.", en:"It's directly opposite the church."},
+{id:"u5-10", nl:"Waar kan ik parkeren?", en:"Where can I park?"},
+{id:"u5-11", nl:"De parking is achter het gemeentehuis.", en:"The car park is behind the town hall.", note:"'De parking' — Belgian Dutch borrows it straight from French."},
+{id:"u5-12", nl:"Volg de borden naar het centrum.", en:"Follow the signs to the centre."},
+{id:"u5-13", nl:"Merci voor uw hulp!", en:"Thanks for your help!", alt:["Bedankt voor je hulp!"]}
+]},
+{id:"u6", title:"Thuis en familie", en:"Home & family", scene:"Sunday at home: kids, the cat, and chores.", items:[
+{id:"u6-01", nl:"Dit is mijn vrouw.", en:"This is my wife."},
+{id:"u6-02", nl:"Ik heb twee kinderen.", en:"I have two children."},
+{id:"u6-03", nl:"Mijn zoon is acht jaar.", en:"My son is eight years old."},
+{id:"u6-04", nl:"Wij wonen in een appartement.", en:"We live in an apartment."},
+{id:"u6-05", nl:"De keuken is klein maar gezellig.", en:"The kitchen is small but cosy."},
+{id:"u6-06", nl:"Ik moet nog kuisen.", en:"I still have to clean.", note:"'Kuisen' = to clean, the Flemish word ('schoonmaken' in NL)."},
+{id:"u6-07", nl:"Mijn dochter doet de afwas.", en:"My daughter is doing the dishes."},
+{id:"u6-08", nl:"De poes slaapt op de zetel.", en:"The cat is sleeping on the sofa.", note:"'Zetel' = sofa in Flanders (the Dutch say 'bank')."},
+{id:"u6-09", nl:"Mijn ouders wonen dichtbij.", en:"My parents live nearby."},
+{id:"u6-10", nl:"Zondag eten we bij mijn schoonmoeder.", en:"On Sunday we eat at my mother-in-law's."},
+{id:"u6-11", nl:"Kunt ge de deur toedoen?", en:"Can you close the door?", note:"'Toedoen' — Flemish for 'dichtdoen'.", alt:["Kun je de deur dichtdoen?"]},
+{id:"u6-12", nl:"De was hangt buiten.", en:"The laundry is hanging outside."},
+{id:"u6-13", nl:"Ons huis heeft een klein hofke.", en:"Our house has a little garden.", note:"'Hofke' = small garden — pure Flemish diminutive."}
+]},
+{id:"u7", title:"Boodschappen doen", en:"Grocery shopping", scene:"A quick run to the Colruyt before it closes.", items:[
+{id:"u7-01", nl:"Ik ga naar de winkel.", en:"I'm going to the shop."},
+{id:"u7-02", nl:"Hebt ge een boodschappenlijstje?", en:"Do you have a shopping list?", alt:["Heb je een boodschappenlijstje?"]},
+{id:"u7-03", nl:"We hebben melk en eieren nodig.", en:"We need milk and eggs."},
+{id:"u7-04", nl:"Waar vind ik de groenten?", en:"Where do I find the vegetables?"},
+{id:"u7-05", nl:"Een kilo appelen, alstublieft.", en:"A kilo of apples, please."},
+{id:"u7-06", nl:"Hebt ge een zakje nodig?", en:"Do you need a little bag?"},
+{id:"u7-07", nl:"Ik zoek de kassa.", en:"I'm looking for the checkout."},
+{id:"u7-08", nl:"Dat is samen twintig euro.", en:"That's twenty euros altogether."},
+{id:"u7-09", nl:"Kan ik met Bancontact betalen?", en:"Can I pay with Bancontact?", note:"Bancontact is Belgium's ubiquitous debit system."},
+{id:"u7-10", nl:"De winkelkar staat buiten.", en:"The shopping trolley is outside.", note:"'Winkelkar' in Flanders; 'winkelwagen' in NL."},
+{id:"u7-11", nl:"Deze yoghurt is in promotie.", en:"This yoghurt is on special offer.", note:"'In promotie' = on sale — from French 'en promotion'."},
+{id:"u7-12", nl:"Vergeet het brood niet!", en:"Don't forget the bread!"}
+]},
+{id:"u8", title:"Het weer", en:"The weather", scene:"The one topic that never runs out in Belgium.", items:[
+{id:"u8-01", nl:"Wat een schoon weer vandaag!", en:"What lovely weather today!", note:"'Schoon' means beautiful in Flanders, not just clean."},
+{id:"u8-02", nl:"Het regent al heel de dag.", en:"It's been raining all day."},
+{id:"u8-03", nl:"Amai, het is koud buiten!", en:"Wow, it's cold outside!"},
+{id:"u8-04", nl:"Morgen wordt het warmer.", en:"Tomorrow it will get warmer."},
+{id:"u8-05", nl:"Neem uw paraplu mee.", en:"Take your umbrella with you."},
+{id:"u8-06", nl:"De zon schijnt.", en:"The sun is shining."},
+{id:"u8-07", nl:"Het vriest vannacht.", en:"It will freeze tonight."},
+{id:"u8-08", nl:"In de zomer is het hier aangenaam.", en:"In summer it's pleasant here."},
+{id:"u8-09", nl:"Er komt onweer af.", en:"A thunderstorm is coming.", note:"'Er komt ... af' — a very Flemish construction."},
+{id:"u8-10", nl:"Het waait hard aan de kust.", en:"It's very windy at the coast."},
+{id:"u8-11", nl:"Ik heb het warm.", en:"I feel hot.", note:"Literally 'I have it warm' — never 'ik ben warm'."},
+{id:"u8-12", nl:"Trek een dikke jas aan.", en:"Put on a thick coat."}
+]},
+{id:"u9", title:"Gevoelens en goesting", en:"Feelings & cravings", scene:"Saying how you feel — the Flemish way.", items:[
+{id:"u9-01", nl:"Ik ben moe.", en:"I am tired."},
+{id:"u9-02", nl:"Ik heb honger.", en:"I am hungry.", note:"Literally 'I have hunger'."},
+{id:"u9-03", nl:"Hebt ge dorst?", en:"Are you thirsty?", alt:["Heb je dorst?"]},
+{id:"u9-04", nl:"Ik heb geen goesting om te werken.", en:"I don't feel like working.", note:"'Geen goesting hebben om...' — you'll use this weekly."},
+{id:"u9-05", nl:"Ik ben content.", en:"I am pleased.", note:"'Content' = tevreden — French loan, very Flemish."},
+{id:"u9-06", nl:"Dat is plezant!", en:"That is fun!", note:"'Plezant' is the Flemish 'leuk'."},
+{id:"u9-07", nl:"Ik verveel mij.", en:"I am bored."},
+{id:"u9-08", nl:"Maak u geen zorgen.", en:"Don't worry.", alt:["Maak je geen zorgen."]},
+{id:"u9-09", nl:"Ik ben een beetje zenuwachtig.", en:"I am a little nervous."},
+{id:"u9-10", nl:"Dat doet mij plezier.", en:"That makes me happy."},
+{id:"u9-11", nl:"Ik zie u graag.", en:"I love you.", note:"Literally 'I see you gladly' — THE Flemish way to say I love you."},
+{id:"u9-12", nl:"Het spijt me.", en:"I am sorry."},
+{id:"u9-13", nl:"Alles komt in orde.", en:"Everything will be fine.", note:"'In orde' — the Flemish 'okay/sorted'."}
+]},
+{id:"u10", title:"Op restaurant", en:"At the restaurant", scene:"Stoofvlees met frietjes — the national ritual.", items:[
+{id:"u10-01", nl:"Ik wil graag een tafel voor twee reserveren.", en:"I would like to reserve a table for two."},
+{id:"u10-02", nl:"Hebt ge al gekozen?", en:"Have you chosen yet?", alt:["Heb je al gekozen?"]},
+{id:"u10-03", nl:"Als voorgerecht neem ik de soep.", en:"As a starter I'll have the soup."},
+{id:"u10-04", nl:"Voor mij de stoofvlees met frietjes.", en:"For me the beef stew with fries.", note:"Stoofvlees met frietjes — Flanders on a plate."},
+{id:"u10-05", nl:"Hoe wilt ge uw biefstuk?", en:"How would you like your steak?"},
+{id:"u10-06", nl:"Goed gebakken, alstublieft.", en:"Well done, please."},
+{id:"u10-07", nl:"Is er een dagschotel?", en:"Is there a dish of the day?", note:"'Dagschotel' — the affordable daily special, a Belgian institution."},
+{id:"u10-08", nl:"Nog wat water, alstublieft.", en:"Some more water, please."},
+{id:"u10-09", nl:"Het eten is heel lekker.", en:"The food is very tasty."},
+{id:"u10-10", nl:"Wilt ge nog een dessertje?", en:"Would you like a little dessert?"},
+{id:"u10-11", nl:"De mayonaise is voor de frietjes.", en:"The mayonnaise is for the fries."},
+{id:"u10-12", nl:"Mogen we afrekenen?", en:"May we pay?"},
+{id:"u10-13", nl:"Is de dienst inbegrepen?", en:"Is service included?"}
+]},
+{id:"u11", title:"Gezondheid", en:"Health", scene:"A cold week: doctor, pharmacy, and rest.", items:[
+{id:"u11-01", nl:"Ik voel mij niet goed.", en:"I don't feel well."},
+{id:"u11-02", nl:"Ik heb hoofdpijn.", en:"I have a headache."},
+{id:"u11-03", nl:"Waar doet het pijn?", en:"Where does it hurt?"},
+{id:"u11-04", nl:"Ik moet naar de dokter.", en:"I have to go to the doctor."},
+{id:"u11-05", nl:"Hebt ge een afspraak?", en:"Do you have an appointment?", alt:["Heb je een afspraak?"]},
+{id:"u11-06", nl:"De apotheek is om de hoek.", en:"The pharmacy is around the corner."},
+{id:"u11-07", nl:"Neem dit twee keer per dag.", en:"Take this twice a day."},
+{id:"u11-08", nl:"Ik ben verkouden.", en:"I have a cold."},
+{id:"u11-09", nl:"Ge moet in uw bed blijven.", en:"You have to stay in bed.", alt:["Je moet in je bed blijven."]},
+{id:"u11-10", nl:"Ik heb koorts.", en:"I have a fever."},
+{id:"u11-11", nl:"Beterschap!", en:"Get well soon!"},
+{id:"u11-12", nl:"Het is niets ergs.", en:"It's nothing serious."},
+{id:"u11-13", nl:"Ik ben allergisch aan noten.", en:"I am allergic to nuts.", note:"Flemish says 'allergisch aan' (NL says 'allergisch voor')."}
+]},
+{id:"u12", title:"Met de trein", en:"By train", scene:"Commuting through Belgium, delays included.", items:[
+{id:"u12-01", nl:"Een ticket naar Gent, alstublieft.", en:"A ticket to Ghent, please."},
+{id:"u12-02", nl:"Enkel of heen en terug?", en:"Single or return?"},
+{id:"u12-03", nl:"Op welk spoor vertrekt de trein?", en:"From which platform does the train leave?"},
+{id:"u12-04", nl:"De trein heeft vertraging.", en:"The train is delayed."},
+{id:"u12-05", nl:"Moet ik overstappen?", en:"Do I have to change trains?"},
+{id:"u12-06", nl:"Ja, ge moet overstappen in Brussel.", en:"Yes, you have to change in Brussels.", alt:["Ja, je moet overstappen in Brussel."]},
+{id:"u12-07", nl:"Is deze plaats vrij?", en:"Is this seat free?"},
+{id:"u12-08", nl:"De trein vertrekt om kwart na negen.", en:"The train leaves at a quarter past nine.", note:"Flanders says 'kwart na' where NL says 'kwart over'."},
+{id:"u12-09", nl:"Waar moet ik afstappen?", en:"Where do I have to get off?"},
+{id:"u12-10", nl:"De volgende halte is Antwerpen-Centraal.", en:"The next stop is Antwerp Central."},
+{id:"u12-11", nl:"Ik neem de tram naar het werk.", en:"I take the tram to work."},
+{id:"u12-12", nl:"De bus komt om de tien minuten.", en:"The bus comes every ten minutes."}
+]}
+]};
+
+
+/* ================= core state ================= */
+const KEY='vlot-v1';
+const DAY=86400000;
+const SKILLS=['L','D','P','S'];
+const SKILLNAME={L:'Luisteren',D:'Dictee',P:'Schrijven',S:'Spreken'};
+const ITEMS={}; const UNITOF={};
+COURSE.units.forEach(u=>u.items.forEach(it=>{ITEMS[it.id]=it; UNITOF[it.id]=u;}));
+const ORDER=COURSE.units.flatMap(u=>u.items.map(i=>i.id));
+
+let S=load();
+function blank(){return {xp:0,streak:{n:0,last:null},items:{},set:{rate:80,acc:true,perNew:6}};}
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items) return Object.assign(blank(),o);}}catch(e){}
+  return blank();
+}
+let memOnly=false;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){memOnly=true;}
+}
+['visibilitychange','pagehide','beforeunload'].forEach(ev=>addEventListener(ev,save));
+
+/* ================= SRS (SM-2 style, per item per skill) ================= */
+function skState(id,k){
+  if(!S.items[id]) S.items[id]={intro:false,sk:{}};
+  if(!S.items[id].sk[k]) S.items[id].sk[k]={ef:2.5,iv:0,due:0,n:0};
+  return S.items[id].sk[k];
+}
+function grade(id,k,q){ // q: 0 again, 3 hard, 4 good, 5 easy
+  const s=skState(id,k), now=Date.now();
+  if(q<3){ s.n=0; s.iv=0; s.due=now+10*60000; s.ef=Math.max(1.3,s.ef-0.2); S.xp+=2; }
+  else{
+    s.ef=Math.max(1.3, s.ef+(0.1-(5-q)*(0.08+(5-q)*0.02)));
+    if(s.n===0) s.iv=(q===3?0.5:1);
+    else if(s.n===1) s.iv=(q===3?2:(q===5?4:3));
+    else s.iv=s.iv*s.ef*(q===3?0.6:(q===5?1.3:1));
+    s.n++; s.due=now+s.iv*DAY;
+    S.xp+=(q===3?5:(q===4?10:15));
+  }
+  bumpStreak(); save();
+}
+function bumpStreak(){
+  const d=new Date().toDateString();
+  if(S.streak.last===d) return;
+  const y=new Date(Date.now()-DAY).toDateString();
+  S.streak.n=(S.streak.last===y)?S.streak.n+1:1;
+  S.streak.last=d;
+}
+function dueList(){
+  const now=Date.now(), out=[];
+  for(const id in S.items){ if(!S.items[id].intro) continue;
+    for(const k of SKILLS){ const s=S.items[id].sk[k]; if(s&&s.due<=now) out.push({id,k,due:s.due}); }
+  }
+  out.sort((a,b)=>a.due-b.due); return out;
+}
+function newIds(max){
+  const out=[]; for(const id of ORDER){ if(!(S.items[id]&&S.items[id].intro)){ out.push(id); if(out.length>=max) break; } }
+  return out;
+}
+function skillStrength(k){
+  let sum=0,n=0;
+  for(const id in S.items){ if(!S.items[id].intro) continue;
+    const s=S.items[id].sk[k]; n++;
+    sum+= s? Math.min(1, s.iv/21) : 0;
+  }
+  return n? sum/n : 0;
+}
+
+/* ================= text utils ================= */
+function norm(t){
+  t=t.toLowerCase().trim().replace(/[.,!?;:'"’‘“”()\-]/g,' ').replace(/\s+/g,' ').trim();
+  if(S.set.acc) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return t;
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  let prev=Array.from({length:n+1},(_,j)=>j), cur=new Array(n+1);
+  for(let i=1;i<=m;i++){ cur[0]=i;
+    for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    [prev,cur]=[cur,prev];
+  } return prev[n];
+}
+function bestMatch(input,it){
+  const cands=[it.nl].concat(it.alt||[]);
+  let best={d:1e9,c:it.nl};
+  for(const c of cands){ const d=lev(norm(input),norm(c)); if(d<best.d) best={d,c}; }
+  return best;
+}
+function wordsOf(t){return norm(t).split(' ').filter(Boolean);}
+function lcsMark(target,saidArr){ // returns per-target-word boolean matched
+  const T=wordsOf(target), U=saidArr;
+  const m=T.length,n=U.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=m-1;i>=0;i--)for(let j=n-1;j>=0;j--)
+    dp[i][j]=T[i]===U[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const mark=new Array(m).fill(false); let i=0,j=0;
+  while(i<m&&j<n){ if(T[i]===U[j]){mark[i]=true;i++;j++;} else if(dp[i+1][j]>=dp[i][j+1])i++; else j++; }
+  return {mark,score:m?mark.filter(Boolean).length/m:0,T};
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ================= speech (TTS) ================= */
+let VOICE=null;
+function pickVoice(){
+  if(!('speechSynthesis' in window)) return;
+  const vs=speechSynthesis.getVoices();
+  VOICE = vs.find(v=>/nl[-_]BE/i.test(v.lang))
+       || vs.find(v=>/belg|vlaams|flem/i.test(v.name))
+       || vs.find(v=>/^nl/i.test(v.lang)) || null;
+}
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+function speak(text,rate,cb){
+  if(!('speechSynthesis' in window)){ if(cb)cb(); return; }
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(VOICE) u.voice=VOICE;
+  u.lang=VOICE?VOICE.lang:'nl-BE';
+  u.rate=(rate||S.set.rate)/100;
+  if(cb) u.onend=cb;
+  speechSynthesis.speak(u);
+}
+
+/* ================= speech recognition ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let recogFailed=false;
+
+/* ================= router / home ================= */
+function go(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('scr-'+name).classList.add('on');
+  if(name==='home') renderHome();
+  if(name==='settings') renderSettings();
+  scrollTo(0,0);
+}
+function renderHome(){
+  document.getElementById('st-streak').textContent=S.streak.n;
+  document.getElementById('st-xp').textContent=S.xp;
+  const due=dueList().length;
+  document.getElementById('st-due').textContent=due;
+  const nn=newIds(S.set.perNew).length;
+  const b=document.getElementById('btn-session');
+  b.textContent = due? ('Start sessie · '+due+' herhalingen'+(nn?' + nieuw':'')) : (nn? 'Start sessie · '+nn+' nieuwe zinnen' : 'Alles geleerd voor nu 🎉');
+  b.disabled = !due && !nn;
+  drawDiamond();
+  const tb=document.getElementById('ttsbanner');
+  if(!('speechSynthesis' in window))
+    tb.innerHTML='<div class="banner"><b>Geen audio hier.</b> Download this file and open it directly in Chrome — speech only works outside the preview.</div>';
+  else tb.innerHTML= memOnly?'<div class="banner">Opslaan lukt niet in deze omgeving — gebruik Exporteer in de instellingen.</div>':'';
+}
+function drawDiamond(){
+  const v=[skillStrength('L'),skillStrength('S'),skillStrength('P'),skillStrength('D')]; // top,right,bottom,left
+  const cx=130,cy=110,R=78;
+  const pt=(i,r)=>{const a=[-90,0,90,180][i]*Math.PI/180;return (cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1);};
+  const outer=[0,1,2,3].map(i=>pt(i,R)).join(' ');
+  const inner=[0,1,2,3].map(i=>pt(i,Math.max(6,R*v[i]))).join(' ');
+  document.getElementById('diamond').innerHTML=
+  '<svg width="260" height="220" viewBox="0 0 260 220">'+
+  '<polygon points="'+outer+'" fill="none" stroke="var(--line)" stroke-width="1.5"/>'+
+  '<polygon points="'+[0,1,2,3].map(i=>pt(i,R/2)).join(' ')+'" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>'+
+  '<polygon points="'+inner+'" fill="rgba(242,195,25,.25)" stroke="var(--leeuw)" stroke-width="2"/>'+
+  [0,1,2,3].map(i=>'<circle cx="'+pt(i,Math.max(6,R*v[i])).split(',')[0]+'" cy="'+pt(i,Math.max(6,R*v[i])).split(',')[1]+'" r="3.5" fill="var(--leeuw)"/>').join('')+
+  '<text x="'+cx+'" y="16" text-anchor="middle" class="dlab">Luisteren</text>'+
+  '<text x="'+(cx+R+8)+'" y="'+(cy+4)+'" text-anchor="start" class="dlab">Spreken</text>'+
+  '<text x="'+cx+'" y="'+(cy+R+22)+'" text-anchor="middle" class="dlab">Schrijven</text>'+
+  '<text x="'+(cx-R-8)+'" y="'+(cy+4)+'" text-anchor="end" class="dlab">Dictee</text>'+
+  '</svg>';
+}
+
+/* ================= session engine ================= */
+let Q=[], QI=0, sessXP=0;
+function startSession(){
+  const CAP=20;
+  const due=dueList().slice(0,CAP);
+  Q=due.map(d=>({type:'ex',id:d.id,k:d.k}));
+  // interleave: avoid same item back-to-back
+  for(let i=1;i<Q.length;i++) if(Q[i].id===Q[i-1].id){
+    const j=Q.findIndex((q,x)=>x>i&&q.id!==Q[i-1].id); if(j>0)[Q[i],Q[j]]=[Q[j],Q[i]];
+  }
+  if(Q.length<CAP){
+    const fresh=newIds(Math.min(S.set.perNew, Math.ceil((CAP-Q.length)/2)));
+    fresh.forEach(id=>{ Q.push({type:'intro',id}); Q.push({type:'ex',id,k:'P'}); });
+  }
+  if(!Q.length){renderHome();return;}
+  QI=0; sessXP=S.xp;
+  go('session'); renderEx();
+}
+function quitSession(){ save(); go('home'); }
+function stepDone(){
+  QI++;
+  document.getElementById('sess-xp').textContent='+'+(S.xp-sessXP);
+  if(QI>=Q.length) return finishSession();
+  renderEx();
+}
+function finishSession(){
+  const ex=document.getElementById('ex');
+  document.getElementById('sess-prog').style.width='100%';
+  ex.innerHTML='<div class="done-big">🦁</div>'+
+   '<h2 class="big center">Goed gedaan!</h2>'+
+   '<p class="sub center">+'+(S.xp-sessXP)+' XP · streak '+S.streak.n+' dagen</p>'+
+   '<div class="foot"><button class="btn primary" onclick="go(\'home\')">Naar het overzicht</button>'+
+   '<button class="btn ghost" onclick="startSession()">Nog een sessie</button></div>';
+  save();
+}
+function header(k){
+  document.getElementById('sess-prog').style.width=(QI/Q.length*100)+'%';
+  return '<div><span class="skillchip '+k+'">'+SKILLNAME[k]+'</span></div>';
+}
+
+function renderEx(){
+  const q=Q[QI], it=ITEMS[q.id], ex=document.getElementById('ex');
+  if(q.type==='intro') return renderIntro(it,ex);
+  if(q.k==='L') return renderListen(it,ex);
+  if(q.k==='D') return renderType(it,ex,true);
+  if(q.k==='P') return renderType(it,ex,false);
+  if(q.k==='S') return renderSpeak(it,ex);
+}
+
+/* --- intro card --- */
+function renderIntro(it,ex){
+  const u=UNITOF[it.id];
+  ex.innerHTML='<div><span class="skillchip">Nieuw · '+esc(u.title)+'</span></div>'+
+   '<p class="prompt">'+esc(u.scene)+'</p>'+
+   '<div class="big">'+esc(it.nl)+'</div>'+
+   '<div class="mid" style="color:var(--dim)">'+esc(it.en)+'</div>'+
+   (it.note?'<div class="note">'+esc(it.note)+'</div>':'')+
+   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Beluister</button>'+
+   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<p class="tiny">Zeg de zin nu twee keer luidop na — echoing it aloud is what plants it.</p>'+
+   '<div class="foot"><button class="btn primary" onclick="introDone(\''+it.id+'\')">Ik heb het luidop gezegd &rarr;</button></div>';
+  document.getElementById('sess-prog').style.width=(QI/Q.length*100)+'%';
+  setTimeout(()=>speak(it.nl),350);
+}
+function introDone(id){
+  const st=S.items[id]||(S.items[id]={intro:false,sk:{}});
+  st.intro=true;
+  const now=Date.now();
+  // stagger the four skill clocks so they don't all collide
+  skState(id,'P'); // produced right after intro (queued)
+  skState(id,'L').due=now;
+  skState(id,'D').due=now+0.6*DAY;
+  skState(id,'S').due=now+0.3*DAY;
+  save(); stepDone();
+}
+
+/* --- listening (audio -> pick meaning) --- */
+function renderListen(it,ex){
+  lTried=false;
+  const pool=ORDER.filter(id=>id!==it.id);
+  const opts=[it.en];
+  while(opts.length<4){ const c=ITEMS[pool[Math.floor(Math.random()*pool.length)]].en; if(!opts.includes(c)) opts.push(c); }
+  opts.sort(()=>Math.random()-.5);
+  ex.innerHTML=header('L')+
+   '<p class="prompt">Luister. Wat betekent dit?</p>'+
+   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Speel opnieuw</button>'+
+   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<div id="opts">'+opts.map(o=>'<button class="opt" onclick="pickL(this,\''+it.id+'\')">'+esc(o)+'</button>').join('')+'</div>'+
+   '<div id="lz"></div><div class="foot" id="lfoot"></div>';
+  setTimeout(()=>speak(it.nl),300);
+}
+let lTried=false;
+function pickL(btn,id){
+  const it=ITEMS[id], right=btn.textContent===it.en;
+  if(right){
+    btn.classList.add('right');
+    document.querySelectorAll('#opts .opt').forEach(b=>b.onclick=null);
+    document.getElementById('lz').innerHTML='<div class="verdict good"><div class="target">'+esc(it.nl)+'</div>'+(it.note?'<div class="tiny">'+esc(it.note)+'</div>':'')+'</div>';
+    document.getElementById('lfoot').innerHTML='<button class="btn primary" onclick="afterL(\''+id+'\')">Verder &rarr;</button>';
+  } else {
+    btn.classList.add('wrong'); btn.onclick=null; lTried=true; speak(it.nl);
+  }
+}
+function afterL(id){ grade(id,'L', lTried?0:4); lTried=false; stepDone(); }
+
+/* --- typing: dictation (D) or production (P) --- */
+function renderType(it,ex,isDict){
+  const k=isDict?'D':'P';
+  ex.innerHTML=header(k)+
+   (isDict
+     ? '<p class="prompt">Luister en typ wat ge hoort.</p>'+
+       '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Speel opnieuw</button>'+
+       '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'
+     : '<p class="prompt">Zeg het in het Nederlands:</p><div class="big">'+esc(it.en)+'</div>')+
+   '<input type="text" id="ans" autocomplete="off" autocapitalize="off" placeholder="Typ in het Nederlands…">'+
+   '<div id="tz"></div>'+
+   '<div class="foot" id="tfoot"><button class="btn primary" onclick="checkType(\''+it.id+'\',\''+k+'\')">Controleer</button>'+
+   '<button class="btn ghost" onclick="revealType(\''+it.id+'\',\''+k+'\')">Ik weet het niet</button></div>';
+  if(isDict) setTimeout(()=>speak(it.nl),300);
+  const inp=document.getElementById('ans');
+  inp.focus();
+  inp.onkeydown=e=>{if(e.key==='Enter')checkType(it.id,k);};
+}
+function diffHTML(target,input){
+  const um=wordsOf(input);
+  const {mark,T}=lcsMark(target,um);
+  return T.map((w,i)=>'<span class="'+(mark[i]?'wok':'wno')+'">'+esc(w)+'</span>').join(' ');
+}
+function checkType(id,k){
+  const it=ITEMS[id], val=document.getElementById('ans').value;
+  if(!val.trim()) return;
+  const {d,c}=bestMatch(val,it);
+  const nlen=norm(c).length;
+  const tz=document.getElementById('tz'), foot=document.getElementById('tfoot');
+  let q;
+  if(d===0){ q=4; tz.innerHTML='<div class="verdict good">Juist! <div class="target">'+esc(it.nl)+'</div></div>'; }
+  else if(d<=2 || d<=Math.ceil(nlen*0.12)){ q=3;
+    tz.innerHTML='<div class="verdict near">Bijna — let op de details:<div class="target">'+diffHTML(c,val)+'</div><div class="tiny">Gij schreef: '+esc(val)+'</div></div>';
+  } else { q=0;
+    tz.innerHTML='<div class="verdict bad">Niet juist.<div class="target">'+diffHTML(c,val)+'</div><div class="tiny">Gij schreef: '+esc(val)+'</div>'+(it.note?'<div class="tiny">'+esc(it.note)+'</div>':'')+'</div>';
+  }
+  speak(it.nl);
+  foot.innerHTML='<button class="btn primary" onclick="grade(\''+id+'\',\''+k+'\','+q+');stepDone()">Verder &rarr;</button>';
+  document.getElementById('ans').onkeydown=e=>{if(e.key==='Enter'){grade(id,k,q);stepDone();}};
+}
+function revealType(id,k){
+  const it=ITEMS[id];
+  document.getElementById('tz').innerHTML='<div class="verdict bad"><div class="target">'+esc(it.nl)+'</div>'+(it.note?'<div class="tiny">'+esc(it.note)+'</div>':'')+'</div>';
+  speak(it.nl);
+  document.getElementById('tfoot').innerHTML='<button class="btn primary" onclick="grade(\''+id+'\',\''+k+'\',0);stepDone()">Verder &rarr;</button>';
+}
+
+/* --- speaking ladder --- */
+let recog=null, recActive=false;
+function speakStage(id){ const n=skState(id,'S').n; return n<2?0:(n<4?1:2); }
+function renderSpeak(it,ex){
+  const stage=speakStage(it.id);
+  const stageTxt=['Schaduw de zin: lees en zeg mee.','Schaduw op het gehoor — geen tekst.','Zeg het in het Nederlands, uit het hoofd:'][stage];
+  ex.innerHTML=header('S')+
+   '<p class="prompt">'+stageTxt+'</p>'+
+   (stage===0?'<div class="big">'+esc(it.nl)+'</div><div class="mid" style="color:var(--dim)">'+esc(it.en)+'</div>':'')+
+   (stage===1?'<div class="big" id="hiddennl" style="filter:blur(9px)" onclick="this.style.filter=\'none\'">'+esc(it.nl)+'</div><p class="tiny">Tik op de zin als ge vastzit.</p>':'')+
+   (stage===2?'<div class="big">'+esc(it.en)+'</div>':'')+
+   '<div>'+(stage<2?'<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Model</button>':'<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Hint (audio)</button>')+
+   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<div id="miczone" class="center"><button class="mic" id="micbtn" onclick="toggleRecog(\''+it.id+'\')">&#127908;</button>'+
+   '<p class="miclab" id="miclab">Tik en spreek de zin in</p></div>'+
+   '<div class="heard" id="heard"></div>'+
+   '<div class="gradebar" id="sgrades">'+
+     '<button class="btn g0" onclick="grade(\''+it.id+'\',\'S\',0);stepDone()">Opnieuw</button>'+
+     '<button class="btn g3" onclick="grade(\''+it.id+'\',\'S\',3);stepDone()">Moeizaam</button>'+
+     '<button class="btn g4" onclick="grade(\''+it.id+'\',\'S\',4);stepDone()">Goed</button>'+
+     '<button class="btn" onclick="grade(\''+it.id+'\',\'S\',5);stepDone()">Vlot</button>'+
+   '</div>';
+  if(stage<2) setTimeout(()=>speak(it.nl),300);
+  if(!SR||recogFailed) mountVoiceField(it.id);
+}
+function showSpokenVerdict(id,txt){
+  const r=lcsMark(ITEMS[id].nl,wordsOf(txt));
+  const {mark,T,score}=r;
+  document.getElementById('heard').innerHTML=
+    '<div class="verdict '+(score>=0.85?'good':(score>=0.55?'near':'bad'))+'">'+
+    'Gehoord: “'+esc(txt)+'”<div class="target">'+T.map((w,i)=>'<span class="'+(mark[i]?'wok':'wno')+'">'+esc(w)+'</span>').join(' ')+'</div>'+
+    '<div class="tiny">'+Math.round(score*100)+'% van de woorden herkend'+(score>=0.85?' — kies “Goed” of “Vlot”!':score>=0.55?' — nog eens proberen of “Moeizaam”.':' — beluister het model en probeer opnieuw.')+'</div></div>';
+  return score;
+}
+let vtTimer=null;
+function mountVoiceField(id){
+  const z=document.getElementById('miczone'); if(!z) return;
+  z.innerHTML='<input type="text" id="vt" autocomplete="off" autocapitalize="off" placeholder="Tik hier, druk op de &#127908; van uw toetsenbord en spreek">'+
+   '<p class="tiny">This page can\'t use the mic directly, so let your keyboard listen instead: tap the field, tap the little microphone on Gboard, and say the sentence — I\'ll score what it hears. Tip: add “Nederlands (Belgi&euml;)” under Gboard &rarr; Talen so it listens in Dutch.</p>';
+  const f=document.getElementById('vt');
+  f.oninput=()=>{ clearTimeout(vtTimer); vtTimer=setTimeout(()=>{ if(f.value.trim()) showSpokenVerdict(id,f.value); },800); };
+  f.onkeydown=e=>{ if(e.key==='Enter'&&f.value.trim()){ clearTimeout(vtTimer); showSpokenVerdict(id,f.value); f.blur(); } };
+}
+function toggleRecog(id){
+  const btn=document.getElementById('micbtn'), lab=document.getElementById('miclab');
+  if(recActive){ try{recog.stop();}catch(e){} return; }
+  if('speechSynthesis' in window) speechSynthesis.cancel();
+  try{
+    recog=new SR();
+    recog.lang=(VOICE&&/be/i.test(VOICE.lang))?'nl-BE':'nl-NL';
+    recog.interimResults=false; recog.maxAlternatives=3;
+    recog.onstart=()=>{recActive=true;btn.classList.add('rec');lab.textContent='Luistert… spreek nu';};
+    recog.onend=()=>{recActive=false;btn.classList.remove('rec');};
+    recog.onerror=e=>{
+      recActive=false;btn.classList.remove('rec');
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'){recogFailed=true;mountVoiceField(id);}
+      else if(e.error==='network'){lab.textContent='Herkenning heeft internet nodig — of gebruik het toetsenbord:';recogFailed=true;mountVoiceField(id);}
+      else lab.textContent='Niets gehoord — probeer opnieuw.';
+    };
+    recog.onresult=ev=>{
+      let best={score:-1,txt:''};
+      const alts=ev.results[0];
+      for(let i=0;i<alts.length;i++){
+        const t=alts[i].transcript;
+        const r=lcsMark(ITEMS[id].nl,wordsOf(t));
+        if(r.score>best.score) best={score:r.score,txt:t};
+      }
+      showSpokenVerdict(id,best.txt);
+      lab.textContent='Tik om opnieuw te spreken';
+    };
+    recog.start();
+  }catch(e){ recogFailed=true; mountVoiceField(id); }
+}
+
+/* ================= units browser ================= */
+function renderUnits(){
+  const el=document.getElementById('unitlist');
+  el.innerHTML=COURSE.units.map(u=>{
+    const learned=u.items.filter(i=>S.items[i.id]&&S.items[i.id].intro).length;
+    return '<button class="listitem" style="width:100%" onclick="openUnit(\''+u.id+'\')">'+
+      '<div style="text-align:left"><div class="t">'+esc(u.title)+'</div><div class="s">'+esc(u.en)+' · '+learned+'/'+u.items.length+' geleerd</div></div>'+
+      '<span class="chev">&#8250;</span></button>';
+  }).join('');
+}
+function openUnit(uid){
+  const u=COURSE.units.find(x=>x.id===uid);
+  document.getElementById('unitdetail').innerHTML=
+   '<div class="eyebrow">'+esc(u.en)+'</div><h2 class="big">'+esc(u.title)+'</h2><p class="sub">'+esc(u.scene)+'</p>'+
+   '<div class="card">'+u.items.map(it=>
+     '<div class="listitem"><div><div class="t">'+esc(it.nl)+'</div><div class="s">'+esc(it.en)+'</div>'+(it.note?'<div class="s" style="color:var(--leeuw)">'+esc(it.note)+'</div>':'')+'</div>'+
+     '<button class="speakbtn small" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266;</button></div>').join('')+'</div>';
+  go('unit');
+}
+
+/* ================= shadow studio ================= */
+let SH={u:null,i:0,loop:false,text:true,rate:80,rec:null,chunks:[],url:null,recOn:false};
+function openShadowPick(){
+  document.getElementById('shadowunits').innerHTML=COURSE.units.map(u=>
+    '<button class="listitem" style="width:100%" onclick="startShadow(\''+u.id+'\')">'+
+    '<div style="text-align:left"><div class="t">'+esc(u.title)+'</div><div class="s">'+u.items.length+' zinnen</div></div><span class="chev">&#8250;</span></button>').join('');
+  go('shadowpick');
+}
+function startShadow(uid){
+  SH.u=COURSE.units.find(x=>x.id===uid); SH.i=0; SH.loop=false; SH.text=true; SH.rate=S.set.rate;
+  document.getElementById('sh-rate').value=SH.rate;
+  document.getElementById('sh-rate').oninput=e=>{SH.rate=+e.target.value;document.getElementById('sh-ratelab').textContent=(SH.rate/100).toFixed(2)+'×';};
+  document.getElementById('sh-ratelab').textContent=(SH.rate/100).toFixed(2)+'×';
+  go('shadow'); shRender();
+}
+function shRender(){
+  const it=SH.u.items[SH.i];
+  document.getElementById('sh-title').textContent=SH.u.title;
+  document.getElementById('sh-count').textContent=(SH.i+1)+'/'+SH.u.items.length;
+  document.getElementById('sh-nl').textContent=SH.text?it.nl:'· · ·';
+  document.getElementById('sh-en').textContent=SH.text?it.en:'(tekst verborgen — schaduw op het gehoor)';
+}
+function shPlay(){
+  const it=SH.u.items[SH.i];
+  speak(it.nl,SH.rate,()=>{ if(SH.loop) setTimeout(()=>{ if(SH.loop) shPlay(); },900); });
+}
+function shPrev(){SH.i=(SH.i-1+SH.u.items.length)%SH.u.items.length;shRender();shPlay();}
+function shNext(){SH.i=(SH.i+1)%SH.u.items.length;shRender();shPlay();}
+function shToggleText(){SH.text=!SH.text;document.getElementById('sh-texttog').textContent=SH.text?'Verberg tekst':'Toon tekst';shRender();}
+function shToggleLoop(){SH.loop=!SH.loop;document.getElementById('sh-loop').textContent='Herhaal: '+(SH.loop?'aan':'uit');if(SH.loop)shPlay();}
+function stopShadow(){SH.loop=false; if('speechSynthesis' in window)speechSynthesis.cancel();}
+async function shRecord(){
+  const btn=document.getElementById('sh-rec');
+  if(SH.recOn){ SH.rec.stop(); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    SH.chunks=[]; SH.rec=new MediaRecorder(stream);
+    SH.rec.ondataavailable=e=>SH.chunks.push(e.data);
+    SH.rec.onstop=()=>{
+      SH.recOn=false; btn.textContent='● Opnemen'; btn.classList.remove('g0');
+      stream.getTracks().forEach(t=>t.stop());
+      if(SH.url) URL.revokeObjectURL(SH.url);
+      SH.url=URL.createObjectURL(new Blob(SH.chunks,{type:SH.rec.mimeType||'audio/webm'}));
+      document.getElementById('sh-playrec').disabled=false;
+      document.getElementById('sh-audio').innerHTML='<audio controls src="'+SH.url+'"></audio>';
+    };
+    SH.rec.start(); SH.recOn=true; btn.textContent='■ Stop'; btn.classList.add('g0');
+  }catch(e){ btn.disabled=true; btn.textContent='Opnemen niet mogelijk';
+    document.getElementById('sh-audio').innerHTML='<p class="tiny">Chrome blokkeert de microfoon voor lokaal geopende bestanden. Echo the sentence out loud right after the model instead — the shadowing effect is the same.</p>'; }
+}
+function shPlayRec(){
+  const it=SH.u.items[SH.i];
+  speak(it.nl,SH.rate,()=>{ const a=document.querySelector('#sh-audio audio'); if(a){a.currentTime=0;a.play();} });
+}
+
+/* ================= settings ================= */
+function renderSettings(){
+  const r=document.getElementById('set-rate'); r.value=S.set.rate;
+  document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';
+  r.oninput=e=>{S.set.rate=+e.target.value;document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';save();};
+  const a=document.getElementById('set-acc'); a.checked=S.set.acc;
+  a.onchange=e=>{S.set.acc=e.target.checked;save();};
+  const n=document.getElementById('set-new'); n.value=S.set.perNew;
+  document.getElementById('set-newlab').textContent=S.set.perNew;
+  n.oninput=e=>{S.set.perNew=+e.target.value;document.getElementById('set-newlab').textContent=S.set.perNew;save();};
+}
+function doExport(){
+  const blob=new Blob([JSON.stringify(S)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='vlot-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function doImport(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const o=JSON.parse(r.result); if(o&&o.items){S=Object.assign(blank(),o);save();alert('Voortgang hersteld!');go('home');} else alert('Ongeldig bestand.'); }catch(e){alert('Ongeldig bestand.');} };
+  r.readAsText(f); inp.value='';
+}
+function doReset(){ if(confirm('Alle voortgang wissen?')){S=blank();save();go('home');} }
+
+go('home');
+/* offline support when hosted on https (GitHub Pages etc.) */
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

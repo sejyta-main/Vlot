@@ -138,6 +138,7 @@ audio{width:100%;margin-top:10px}
     <button class="btn primary" id="btn-session" onclick="startSession()">Start sessie</button>
     <button class="btn" onclick="openShadowPick()">Schaduwstudio &mdash; luister &amp; spreek na</button>
     <button class="btn" onclick="renderLab();go('lab')">Uitspraaklab &mdash; de moeilijke klanken</button>
+    <button class="btn" onclick="renderCoach();go('coach')">Coach &mdash; wat loopt mis &amp; hoe verbeteren</button>
     <button class="btn ghost" onclick="renderUnits();go('units')">Blader door de eenheden</button>
   </div>
 </div>
@@ -214,6 +215,19 @@ audio{width:100%;margin-top:10px}
   <div id="labzone"></div>
 </div>
 
+<!-- COACH -->
+<div class="screen" id="scr-coach">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Uw coach</div>
+  <div id="coachzone"></div>
+  <div class="card">
+    <div class="eyebrow">AI-tutor (optioneel, gratis)</div>
+    <div id="aizone"><p class="tiny">Deeper analysis by a real language model: it reads your recent mistakes and explains <i>why</i> you make them, with mini-exercises. Uses Google's free Gemini tier &mdash; get a free key at <b>aistudio.google.com</b> (Get API key), paste it in Instellingen, and this button comes alive. Note: your mistakes are then sent to Google for analysis.</p>
+    <button class="btn primary" id="aibtn" style="margin-top:10px" onclick="askAI()">Vraag de AI-coach</button>
+    <div id="airesult"></div></div>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div class="screen" id="scr-settings">
   <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
@@ -225,6 +239,9 @@ audio{width:100%;margin-top:10px}
       <input type="checkbox" id="set-acc"></label>
     <label class="tog">Nieuwe zinnen per sessie <span id="set-newlab"></span></label>
     <input type="range" class="range" id="set-new" min="2" max="12" step="1">
+    <label class="tog" style="margin-top:8px">Gemini API-sleutel (AI-coach)</label>
+    <input type="text" id="set-gkey" autocomplete="off" placeholder="Plak hier uw gratis sleutel van aistudio.google.com">
+    <p class="tiny">The key stays only on this phone (local storage). Free at aistudio.google.com &rarr; "Get API key" with any Google account.</p>
   </div>
   <div class="card">
     <div class="eyebrow">Voortgang bewaren</div>
@@ -439,7 +456,7 @@ COURSE.units.forEach(u=>u.items.forEach(it=>{ITEMS[it.id]=it; UNITOF[it.id]=u;})
 const ORDER=COURSE.units.flatMap(u=>u.items.map(i=>i.id));
 
 let S=load();
-function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},set:{rate:80,acc:true,perNew:6}};}
+function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},errlog:[],set:{rate:80,acc:true,perNew:6,gkey:''}};}
 function load(){
   try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items) return Object.assign(blank(),o);}}catch(e){}
   return blank();
@@ -468,6 +485,11 @@ function grade(id,k,q){ // q: 0 again, 3 hard, 4 good, 5 easy
     S.xp+=(q===3?5:(q===4?10:15));
   }
   bumpStreak(); save();
+}
+function logErr(k,id,ans,missed){
+  if(!S.errlog) S.errlog=[];
+  S.errlog.push({t:Date.now(),k,id,a:(ans||'').slice(0,120),m:missed||undefined});
+  if(S.errlog.length>150) S.errlog=S.errlog.slice(-150);
 }
 function bumpStreak(){
   const d=new Date().toDateString();
@@ -704,7 +726,7 @@ function pickL(btn,id){
     btn.classList.add('wrong'); btn.onclick=null; lTried=true; speak(it.nl);
   }
 }
-function afterL(id){ grade(id,'L', lTried?0:4); lTried=false; stepDone(); }
+function afterL(id){ if(lTried) logErr('L',id,''); grade(id,'L', lTried?0:4); lTried=false; stepDone(); }
 
 /* --- typing: dictation (D) or production (P) --- */
 function renderType(it,ex,isDict){
@@ -742,12 +764,13 @@ function checkType(id,k){
   } else { q=0;
     tz.innerHTML='<div class="verdict bad">Niet juist.<div class="target">'+diffHTML(c,val)+'</div><div class="tiny">Gij schreef: '+esc(val)+'</div>'+(it.note?'<div class="tiny">'+esc(it.note)+'</div>':'')+'</div>';
   }
+  if(q<4) logErr(k,id,val);
   speak(it.nl);
   foot.innerHTML='<button class="btn primary" onclick="grade(\''+id+'\',\''+k+'\','+q+');stepDone()">Verder &rarr;</button>';
   document.getElementById('ans').onkeydown=e=>{if(e.key==='Enter'){grade(id,k,q);stepDone();}};
 }
 function revealType(id,k){
-  const it=ITEMS[id];
+  const it=ITEMS[id]; logErr(k,id,'');
   document.getElementById('tz').innerHTML='<div class="verdict bad"><div class="target">'+esc(it.nl)+'</div>'+(it.note?'<div class="tiny">'+esc(it.note)+'</div>':'')+'</div>';
   speak(it.nl);
   document.getElementById('tfoot').innerHTML='<button class="btn primary" onclick="grade(\''+id+'\',\''+k+'\',0);stepDone()">Verder &rarr;</button>';
@@ -782,7 +805,7 @@ function showSpokenVerdict(id,txt){
   const r=lcsMark(ITEMS[id].nl,wordsOf(txt));
   const {mark,T,score}=r;
   const missed=T.filter((w,i)=>!mark[i]);
-  if(score<0.85){ missed.forEach(troubleBump); save(); }
+  if(score<0.85){ missed.forEach(troubleBump); logErr('S',id,txt,missed.slice(0,6)); save(); }
   document.getElementById('heard').innerHTML=
     '<div class="verdict '+(score>=0.85?'good':(score>=0.55?'near':'bad'))+'">'+
     'Gehoord: “'+esc(txt)+'”<div class="target">'+T.map((w,i)=>mark[i]
@@ -912,6 +935,133 @@ function wordDrill(id,word){
   speak(word,55);
 }
 
+
+/* ================= coach ================= */
+const SPELLPAIRS=[['ij','ei'],['g','ch'],['aa','a'],['ee','e'],['oo','o'],['uu','u'],['d','t'],['s','z'],['f','v'],['au','ou']];
+function alignPairs(target,ans){ // returns [targetWord, ansWord] pairs of near-misses
+  const T=wordsOf(target), U=wordsOf(ans), out=[];
+  T.forEach(tw=>{
+    let best=null,bd=3;
+    U.forEach(uw=>{ const d=lev(tw,uw); if(d>0&&d<bd){bd=d;best=uw;} });
+    if(best) out.push([tw,best]);
+  });
+  return out;
+}
+function classifyErr(e){
+  const it=ITEMS[e.id]; if(!it) return null;
+  const tags=[];
+  if(e.k==='L') return {tags:['luister'],it};
+  if(e.k==='S') return {tags:['spreek'],it,missed:e.m||[]};
+  if(!e.a) return {tags:['blanco'],it};
+  const tN=wordsOf(it.nl), aN=wordsOf(e.a);
+  if(tN.join(' ')===aN.join(' ')) tags.push('accenten');
+  else if(tN.slice().sort().join(' ')===aN.slice().sort().join(' ')) tags.push('volgorde');
+  else{
+    const missing=tN.filter(w=>!aN.includes(w));
+    const pairs=alignPairs(it.nl,e.a);
+    pairs.forEach(([tw,uw])=>{
+      SPELLPAIRS.forEach(([x,y])=>{
+        if((tw.includes(x)&&uw.includes(y))||(tw.includes(y)&&uw.includes(x))) tags.push('sp:'+x+'/'+y);
+      });
+    });
+    const really=missing.filter(w=>!pairs.some(p=>p[0]===w));
+    if(really.length) tags.push('ontbreekt');
+    if(!tags.length) tags.push('spelling');
+  }
+  return {tags,it};
+}
+function coachData(days){
+  const cut=Date.now()-days*DAY;
+  const errs=(S.errlog||[]).filter(e=>e.t>=cut);
+  const perSkill={L:0,D:0,P:0,S:0}, perSent={}, spellBuckets={}, cats={accenten:0,volgorde:0,ontbreekt:0,spelling:0};
+  const misheard={};
+  errs.forEach(e=>{
+    perSkill[e.k]=(perSkill[e.k]||0)+1;
+    perSent[e.id]=(perSent[e.id]||0)+1;
+    const c=classifyErr(e); if(!c) return;
+    c.tags.forEach(t=>{
+      if(t.startsWith('sp:')) spellBuckets[t.slice(3)]=(spellBuckets[t.slice(3)]||0)+1;
+      else if(cats[t]!==undefined) cats[t]++;
+    });
+    (c.missed||[]).forEach(w=>misheard[w]=(misheard[w]||0)+1);
+  });
+  return {errs,perSkill,perSent,spellBuckets,cats,misheard};
+}
+function topN(obj,n){ return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n); }
+function renderCoach(){
+  const d=coachData(14);
+  const z=document.getElementById('coachzone');
+  if(!d.errs.length){
+    z.innerHTML='<div class="card"><p>Nog geen fouten geregistreerd de laatste 14 dagen. Doe eerst enkele sessies &mdash; de coach leert van elke misser.</p></div>';
+    return;
+  }
+  let html='';
+  // 1. skills
+  const skTot=topN(d.perSkill,4).filter(e=>e[1]>0);
+  const weakest=skTot[0];
+  const skAdv={L:'Doe extra luisterrondes in de Schaduwstudio zonder tekst, aan 0.7&times; tempo.',
+    D:'Gebruik bij Dictee eerst de trage herhaling, en typ pas na de tweede beluistering.',
+    P:'Zeg de Engelse zin eerst luidop in het Nederlands v&oacute;&oacute;r ge typt &mdash; produceren voor het schrijven helpt.',
+    S:'Open het Uitspraaklab en oefen uw rode klanken 5 minuten per dag.'};
+  html+='<div class="card"><div class="eyebrow">Laatste 14 dagen</div>'+
+   '<p style="margin-top:8px"><b>'+d.errs.length+'</b> missers, vooral bij <b>'+SKILLNAME[weakest[0]]+'</b> ('+weakest[1]+'&times;).</p>'+
+   '<div class="tipbox">'+skAdv[weakest[0]]+'</div></div>';
+  // 2. writing patterns
+  const pat=[];
+  if(d.cats.accenten) pat.push('<b>'+d.cats.accenten+'&times; enkel accenten/leestekens</b> &mdash; bijna juist; let op &eacute; en trema&#39;s.');
+  if(d.cats.volgorde) pat.push('<b>'+d.cats.volgorde+'&times; woordvolgorde</b> &mdash; de juiste woorden, verkeerde plaats. Onthoud: werkwoord op plaats 2, rest naar achter.');
+  if(d.cats.ontbreekt) pat.push('<b>'+d.cats.ontbreekt+'&times; woorden vergeten</b> &mdash; vaak de kleine woordjes (er, nog, wel). Lees uw antwoord luidop na v&oacute;&oacute;r Controleer.');
+  const sp=topN(d.spellBuckets,3);
+  sp.forEach(e=>pat.push('<b>'+e[1]+'&times; verwisseling '+esc(e[0])+'</b> &mdash; een klassieke valkuil; zoek de klank op in het Uitspraaklab.'));
+  if(d.cats.spelling) pat.push('<b>'+d.cats.spelling+'&times; andere spelfouten</b> &mdash; typ het woord drie keer na de correctie, dat verankert het.');
+  if(pat.length) html+='<div class="card"><div class="eyebrow">Schrijfpatronen</div>'+pat.map(p=>'<p style="margin-top:8px;font-size:15px">'+p+'</p>').join('')+'</div>';
+  // 3. speaking
+  const mh=topN(d.misheard,5);
+  if(mh.length) html+='<div class="card"><div class="eyebrow">Vaakst niet verstaan</div><div>'+
+    mh.map(e=>'<span class="exword">'+esc(e[0])+' ('+e[1]+'&times;) <button onclick="speak(\''+e[0]+'\',60)">&#128266;</button></span>').join('')+
+    '</div><p class="tiny" style="margin-top:8px">Tik &#128266; en imiteer traag; deze woorden staan ook bovenaan in het Uitspraaklab.</p></div>';
+  // 4. hardest sentences
+  const hs=topN(d.perSent,5).filter(e=>e[1]>=2);
+  if(hs.length) html+='<div class="card"><div class="eyebrow">Uw lastigste zinnen</div>'+
+    hs.map(e=>{const it=ITEMS[e[0]];return '<div class="listitem"><div><div class="t">'+esc(it.nl)+'</div><div class="s">'+e[1]+'&times; gemist &middot; '+esc(it.en)+'</div></div><button class="speakbtn small" onclick="speak(ITEMS[\''+e[0]+'\'].nl,60)">&#128266;</button></div>';}).join('')+
+    '<p class="tiny" style="margin-top:8px">Deze komen vanzelf sneller terug in uw sessies &mdash; de herhaling regelt dat.</p></div>';
+  z.innerHTML=html;
+}
+/* ---- Gemini AI coach ---- */
+const GMODELS=['gemini-3.5-flash','gemini-2.5-flash','gemini-2.5-flash-lite'];
+function aiPayload(){
+  const d=coachData(14);
+  const errs=(S.errlog||[]).slice(-25).map(e=>{
+    const it=ITEMS[e.id]||{};
+    return {skill:SKILLNAME[e.k],target:it.nl,english:it.en,my_answer:e.a||'(gave up)',misheard_words:e.m};
+  });
+  return {skill_error_counts:d.perSkill,trouble_sounds:Object.keys(S.trouble||{}),recent_mistakes:errs};
+}
+async function askAI(){
+  const out=document.getElementById('airesult'), btn=document.getElementById('aibtn');
+  if(!S.set.gkey){ out.innerHTML='<div class="banner">Geen sleutel gevonden. Haal een gratis sleutel op aistudio.google.com (Get API key) en plak ze in Instellingen.</div>'; return; }
+  btn.disabled=true; btn.textContent='De coach denkt na\u2026';
+  const prompt='You are a warm, expert tutor of Belgian Dutch (Vlaams) coaching an English-speaking beginner named Carlos. Below is JSON with his recent mistakes from a 4-skill trainer (listening, dictation, writing, speaking; targets are Flemish sentences). Analyze the ACTUAL errors. Reply in English (Dutch for examples) with: 1) the top 3 error patterns you see, each with WHY it happens for English speakers and one concrete fix; 2) two micro-exercises (2 min each) targeting his weakest points; 3) one sentence of encouragement referencing real progress visible in the data. Be specific to his data, never generic. Max ~350 words. Plain text with simple line breaks, no markdown tables.\n\n'+JSON.stringify(aiPayload());
+  let ok=false, msg='';
+  for(const m of GMODELS){
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(S.set.gkey),{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+      if(r.status===404) continue;
+      const j=await r.json();
+      if(!r.ok){ msg=(j.error&&j.error.message)||('Fout '+r.status); if(r.status===429){msg='Gratis limiet bereikt \u2014 probeer straks opnieuw.';} break; }
+      const txt=(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('');
+      if(txt){ out.innerHTML='<div class="tipbox" style="white-space:pre-wrap;margin-top:12px">'+esc(txt).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</div>'; ok=true; }
+      else msg='Leeg antwoord van de AI.';
+      break;
+    }catch(e){ msg='Netwerkfout \u2014 hebt ge internet?'; break; }
+  }
+  if(!ok&&msg) out.innerHTML='<div class="banner">'+esc(msg)+'</div>';
+  if(!ok&&!msg) out.innerHTML='<div class="banner">Geen van de gratis modellen antwoordde \u2014 probeer later opnieuw.</div>';
+  btn.disabled=false; btn.textContent='Vraag de AI-coach';
+}
+
 /* ================= units browser ================= */
 function renderUnits(){
   const el=document.getElementById('unitlist');
@@ -997,6 +1147,8 @@ function renderSettings(){
   const n=document.getElementById('set-new'); n.value=S.set.perNew;
   document.getElementById('set-newlab').textContent=S.set.perNew;
   n.oninput=e=>{S.set.perNew=+e.target.value;document.getElementById('set-newlab').textContent=S.set.perNew;save();};
+  const g=document.getElementById('set-gkey'); g.value=S.set.gkey||'';
+  g.onchange=e=>{S.set.gkey=e.target.value.trim();save();};
 }
 function doExport(){
   const blob=new Blob([JSON.stringify(S)],{type:'application/json'});

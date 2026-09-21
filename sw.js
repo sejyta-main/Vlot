@@ -1,4 +1,4 @@
-const CACHE = 'vlot-v4';
+const CACHE = 'vlot-v5';
 const ASSETS = ['./', './index.html', './sw.js', './manifest.webmanifest', './icon-512.png'];
 
 self.addEventListener('install', e => {

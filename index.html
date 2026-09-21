@@ -112,10 +112,49 @@ audio{width:100%;margin-top:10px}
 .exword{display:inline-flex;align-items:center;gap:6px;background:var(--ink3);border:1px solid var(--line);border-radius:99px;padding:7px 13px;margin:4px 6px 0 0;font-size:15px;font-weight:600}
 .okmark{color:var(--weide);font-weight:800}
 .badmark{color:var(--klaproos);font-weight:800}
+.hero{background:linear-gradient(145deg,rgba(242,195,25,.13),rgba(107,163,214,.08));border:1px solid rgba(242,195,25,.35);border-radius:20px;padding:18px;margin-top:14px}
+.hero h2{font-size:23px;line-height:1.2;margin-top:5px}
+.planline{display:flex;align-items:center;gap:12px;margin-top:14px}
+.planicon{width:42px;height:42px;flex:none;border-radius:13px;background:var(--ink3);display:grid;place-items:center;font-size:20px}
+.planline b{display:block;font-size:15.5px}.planline span{display:block;color:var(--dim);font-size:13px}
+.levelrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.levelbadge{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:var(--leeuw);color:var(--ink);font-weight:900;font-size:20px;flex:none}
+.levelcopy{flex:1}.levelcopy b{font-size:17px}.levelcopy p{color:var(--dim);font-size:13px}
+.meter{height:8px;background:var(--ink3);border-radius:99px;overflow:hidden;margin-top:8px}.meter i{display:block;height:100%;background:var(--leeuw);border-radius:99px}
+.choice{display:block;width:100%;text-align:left;background:var(--ink2);border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
+.choice b{display:block}.choice span{color:var(--dim);font-size:13.5px}.choice.selected{border-color:var(--leeuw);background:rgba(242,195,25,.1)}
+.seg{display:flex;background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:3px;margin-top:10px;gap:3px}.seg button{flex:1;padding:9px 4px;border-radius:9px;color:var(--dim);font-size:14px}.seg button.on{background:var(--leeuw);color:var(--ink);font-weight:800}
+.cando{display:flex;gap:11px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.cando:last-child{border:0}.cando .check{width:25px;height:25px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:13px}.cando.done .check{background:var(--weide);border-color:var(--weide);color:#fff}.cando b{font-size:15px}.cando p{font-size:13px;color:var(--dim);margin-top:2px}
+.mission{position:relative;overflow:hidden}.mission:after{content:'SPREEK';position:absolute;right:-20px;top:14px;transform:rotate(35deg);font-size:10px;letter-spacing:.18em;color:var(--klaproos);font-weight:900}
+.chat{margin-top:14px;display:flex;flex-direction:column;gap:10px}.bubble{max-width:88%;padding:11px 13px;border-radius:15px;background:var(--ink2);border:1px solid var(--line)}.bubble.them{align-self:flex-start;border-bottom-left-radius:4px}.bubble.me{align-self:flex-end;background:rgba(242,195,25,.12);border-color:rgba(242,195,25,.45);border-bottom-right-radius:4px}.bubble small{display:block;color:var(--dim);margin-bottom:3px}
+.kbd{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:6px;color:var(--dim);font-size:12px}
+.focusring:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--lucht);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div id="app">
+
+<!-- ONBOARDING -->
+<div class="screen" id="scr-onboard">
+  <div class="eyebrow">Uw persoonlijke leraar</div>
+  <h1 class="logo" style="margin-top:8px">Vlot<span>.</span></h1>
+  <h2 class="big" style="margin-top:28px">Waarvoor wilt ge Nederlands spreken?</h2>
+  <p class="sub">Vlot maakt elke dag een kort lesplan rond uw doel en uw zwakste vaardigheid.</p>
+  <div id="goalchoices" style="margin-top:12px">
+    <button class="choice selected" data-goal="daily" onclick="pickGoal(this)"><b>Dagelijks leven in België</b><span>Buren, winkels, dokter, school en onderweg</span></button>
+    <button class="choice" data-goal="work" onclick="pickGoal(this)"><b>Werk en vergaderingen</b><span>Smalltalk, uitleg geven en professioneel overleggen</span></button>
+    <button class="choice" data-goal="integration" onclick="pickGoal(this)"><b>Integratie en niveau halen</b><span>Een duidelijke route van A1 naar zelfstandig Nederlands</span></button>
+  </div>
+  <div class="card"><div class="eyebrow">Dagelijks ritme</div><div class="seg" id="minchoices"><button onclick="pickMinutes(this,5)">5 min</button><button class="on" onclick="pickMinutes(this,10)">10 min</button><button onclick="pickMinutes(this,15)">15 min</button><button onclick="pickMinutes(this,20)">20 min</button></div></div>
+  <div class="foot"><button class="btn primary" onclick="finishOnboarding()">Maak mijn lesplan</button><button class="btn ghost" onclick="go('placement')">Doe eerst de niveauscan · 2 min</button></div>
+</div>
+
+<!-- PLACEMENT -->
+<div class="screen" id="scr-placement">
+  <div class="topbar"><button class="back" onclick="go(S.profile&&S.profile.onboarded?'home':'onboard')">&#8592; Terug</button><span class="pill" id="placecount">1/6</span></div>
+  <div class="eyebrow">Snelle niveauscan</div><h2 class="big" id="placeprompt"></h2><p class="sub" id="placesub"></p><div id="placeopts" style="margin-top:14px"></div>
+</div>
 
 <!-- HOME -->
 <div class="screen" id="scr-home">
@@ -124,6 +163,7 @@ audio{width:100%;margin-top:10px}
     <button class="back" onclick="go('settings')">&#9881;</button>
   </div>
   <div id="ttsbanner"></div>
+  <div class="hero" id="dailyplan"></div>
   <div class="statrow">
     <div class="stat"><b id="st-streak">0</b><span>dagen streak</span></div>
     <div class="stat"><b id="st-xp">0</b><span>xp</span></div>
@@ -134,13 +174,33 @@ audio{width:100%;margin-top:10px}
     <div class="diamond" id="diamond"></div>
     <div id="troublezone"></div>
   </div>
+  <div class="card" id="levelcard"></div>
   <div class="foot">
-    <button class="btn primary" id="btn-session" onclick="startSession()">Start sessie</button>
+    <button class="btn primary" id="btn-session" onclick="startSession()">Start mijn les</button>
+    <button class="btn" onclick="openMissions()">Spreekmissies &mdash; oefen echte situaties</button>
+    <button class="btn" onclick="renderPath();go('path')">Mijn leerpad &mdash; CEFR-doelen</button>
     <button class="btn" onclick="openShadowPick()">Schaduwstudio &mdash; luister &amp; spreek na</button>
     <button class="btn" onclick="renderLab();go('lab')">Uitspraaklab &mdash; de moeilijke klanken</button>
     <button class="btn" onclick="renderCoach();go('coach')">Coach &mdash; wat loopt mis &amp; hoe verbeteren</button>
     <button class="btn ghost" onclick="renderUnits();go('units')">Blader door de eenheden</button>
   </div>
+</div>
+
+<!-- LEARNING PATH -->
+<div class="screen" id="scr-path">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Uw leerpad</div><h2 class="big">Van begrijpen naar vlot spreken</h2><p class="sub">Een niveau telt pas wanneer ge de taal kunt gebruiken. Elke mijlpaal koppelt luisteren, spreken en een echte taak.</p><div id="pathzone"></div>
+</div>
+
+<!-- MISSIONS -->
+<div class="screen" id="scr-missions">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Spreekmissies</div><h2 class="big">Train voor het echte moment</h2><p class="sub">Luister naar uw gesprekspartner en antwoord hardop. Vlot helpt alleen wanneer ge vastzit.</p><div id="missionlist"></div>
+</div>
+
+<!-- MISSION PLAY -->
+<div class="screen" id="scr-mission">
+  <div class="topbar"><button class="back" onclick="openMissions()">&#8592; Missies</button><span class="pill" id="missioncount"></span></div><div id="missionzone"></div>
 </div>
 
 <!-- SESSION -->
@@ -233,6 +293,16 @@ audio{width:100%;margin-top:10px}
   <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
   <div class="eyebrow">Instellingen</div>
   <div class="card">
+    <div class="eyebrow">Mijn leerdoel</div>
+    <label class="tog">Dagelijkse lestijd <span id="set-minlab"></span></label>
+    <input type="range" class="range" id="set-min" min="5" max="20" step="5">
+    <label class="tog">Hoofddoel</label>
+    <select id="set-goal" style="width:100%;background:var(--ink3);color:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit">
+      <option value="daily">Dagelijks leven in België</option><option value="work">Werk en vergaderingen</option><option value="integration">Integratie en CEFR-niveau</option>
+    </select>
+    <button class="btn ghost" style="margin-top:10px" onclick="go('placement')">Niveauscan opnieuw doen</button>
+  </div>
+  <div class="card">
     <label class="tog">Spreektempo <span id="set-ratelab"></span></label>
     <input type="range" class="range" id="set-rate" min="55" max="110" step="5">
     <label class="tog" style="margin-top:8px">Accenten negeren bij typen
@@ -255,7 +325,7 @@ audio{width:100%;margin-top:10px}
   </div>
   <div class="card">
     <div class="eyebrow">De methode</div>
-    <p class="tiny" style="margin-top:8px">Every sentence is trained as four separate skills — <b style="color:var(--lucht)">listening</b>, <b style="color:var(--weide)">dictation</b>, <b style="color:var(--leeuw)">writing</b> and <b style="color:var(--klaproos)">speaking</b> — each on its own spaced-repetition clock. The app always serves whatever is weakest, and it makes you produce Dutch, never just recognize it. Speaking climbs a ladder: shadow with text &rarr; shadow by ear &rarr; say it from the English alone.</p>
+    <p class="tiny" style="margin-top:8px">Elke zin wordt apart getraind als <b style="color:var(--lucht)">luisteren</b>, <b style="color:var(--weide)">dictee</b>, <b style="color:var(--leeuw)">schrijven</b> en <b style="color:var(--klaproos)">spreken</b>. Vlot plant herhaling wanneer ge dreigt te vergeten, geeft extra gewicht aan uw zwakste vaardigheid en eindigt met gebruik in een echte situatie. Spreken klimt van nazeggen met tekst naar een spontaan antwoord zonder script.</p>
   </div>
 </div>
 
@@ -445,6 +515,59 @@ units: [
 ]}
 ]};
 
+/* ================= curriculum & real-world missions ================= */
+const CURRICULUM=[
+ {level:'A1',title:'Overleven en contact maken',units:['u1','u2','u3','u4','u5','u6'],can:[
+  {id:'a1-greet',label:'Ik kan iemand begroeten en mezelf voorstellen.',units:['u1']},
+  {id:'a1-buy',label:'Ik kan iets bestellen, kopen en betalen.',units:['u2','u3']},
+  {id:'a1-plan',label:'Ik kan een eenvoudige afspraak maken.',units:['u4']},
+  {id:'a1-help',label:'Ik kan de weg vragen en eenvoudige instructies volgen.',units:['u5']},
+  {id:'a1-home',label:'Ik kan kort over mijn familie en thuis vertellen.',units:['u6']}
+ ]},
+ {level:'A2',title:'Zelfstandig in het dagelijks leven',units:['u7','u8','u9','u10','u11','u12'],can:[
+  {id:'a2-shop',label:'Ik kan boodschappen doen en praktische vragen stellen.',units:['u7']},
+  {id:'a2-smalltalk',label:'Ik kan een kort gesprek over weer en gevoelens voeren.',units:['u8','u9']},
+  {id:'a2-service',label:'Ik kan in een restaurant reserveren en afrekenen.',units:['u10']},
+  {id:'a2-health',label:'Ik kan klachten uitleggen en een doktersafspraak regelen.',units:['u11']},
+  {id:'a2-travel',label:'Ik kan zelfstandig informatie over een reis uitwisselen.',units:['u12']}
+ ]},
+ {level:'B1',title:'Gesprekken voeren en ervaringen uitleggen',units:[],coming:true,can:[
+  {id:'b1-story',label:'Ik kan ervaringen, plannen en meningen samenhangend vertellen.',units:[]},
+  {id:'b1-work',label:'Ik kan deelnemen aan gewone gesprekken op het werk.',units:[]}
+ ]}
+];
+const LEVEL_BY_UNIT={}; CURRICULUM.forEach(c=>c.units.forEach(id=>LEVEL_BY_UNIT[id]=c.level));
+const MISSIONS=[
+ {id:'bakker',level:'A1',icon:'🥖',title:'Bij de bakker',goal:'Bestel brood, reageer op een vraag en betaal.',turns:[
+  {them:'Goeiemorgen! Wat mag het zijn?',model:'Goeiemorgen. Ik wil graag een wit brood.',alts:['Ik wil graag een wit brood.','Een wit brood, alstublieft.'],keys:['brood']},
+  {them:'Gesneden of niet gesneden?',model:'Gesneden, alstublieft.',alts:['Gesneden, alstublieft.','Graag gesneden.'],keys:['gesneden']},
+  {them:'Nog iets anders?',model:'Nee, dat is alles. Ik betaal met de kaart.',alts:['Dat is alles, merci.','Nee, dat is alles. Ik betaal met de kaart.'],keys:['alles','kaart']}
+ ]},
+ {id:'dokter',level:'A1',icon:'🩺',title:'De dokter bellen',goal:'Maak een afspraak en onderhandel over het tijdstip.',turns:[
+  {them:'Dokterspraktijk De Linde, waarmee kan ik u helpen?',model:'Goeiedag, ik wil graag een afspraak maken.',alts:['Ik wil graag een afspraak maken.'],keys:['afspraak']},
+  {them:'Past morgen om tien uur voor u?',model:'Liever niet. Hebt u iets later?',alts:['Liever niet. Hebt u iets later?','Dat past mij niet. Hebt u iets anders?'],keys:['niet','later','anders']},
+  {them:'Om half twaalf kan ook.',model:'Half twaalf past goed. Dank u wel.',alts:['Half twaalf past goed. Dank u wel.'],keys:['half twaalf','goed']}
+ ]},
+ {id:'buur',level:'A2',icon:'🌦️',title:'Praten met de buur',goal:'Voer korte smalltalk en stel een vervolgvraag.',turns:[
+  {them:'Goeiemorgen Carlos, alles goed?',model:'Ja, prima. En met u?',alts:['Ja, prima. En met u?','Het gaat goed, en met u?'],keys:['goed','prima']},
+  {them:'Ook goed. Amai, wat een regen vandaag!',model:'Inderdaad. Denkt u dat het straks beter wordt?',alts:['Denkt u dat het straks beter wordt?','Hopelijk wordt het straks beter.'],keys:['straks','beter']},
+  {them:'Volgens mij komt de zon vanmiddag.',model:'Gelukkig! Gaat u nog wandelen?',alts:['Gelukkig! Gaat u nog wandelen?'],keys:['wandelen']}
+ ]},
+ {id:'werk',level:'A2',icon:'💼',title:'In een vergadering',goal:'Vraag verduidelijking en vat een actie samen.',turns:[
+  {them:'We moeten de levering volgende week versnellen.',model:'Kunt u uitleggen waarom dat nodig is?',alts:['Kunt u uitleggen waarom dat nodig is?','Waarom is dat nodig?'],keys:['waarom','uitleggen']},
+  {them:'De klant heeft de datum naar voren geschoven.',model:'Begrijp ik het goed dat de datum veranderd is?',alts:['Begrijp ik het goed dat de datum veranderd is?'],keys:['begrijp','datum']},
+  {them:'Ja, precies. Kunt u vandaag de planning aanpassen?',model:'Ja. Ik pas de planning vandaag aan en stuur een update.',alts:['Ik pas de planning vandaag aan en stuur een update.'],keys:['planning','update']}
+ ]}
+];
+const PLACEMENT=[
+ {q:'Wat betekent “Ik woon in België”?',sub:'Kies de beste betekenis.',opts:['I work in Belgium','I live in Belgium','I travel to Belgium'],a:1},
+ {q:'Luister en kies wat ge hoort.',audio:'De afspraak is morgen om tien uur.',opts:['The shop opens tomorrow','The appointment is tomorrow at ten','The train leaves at ten'],a:1},
+ {q:'Vul aan: “Ik wil graag ___ afspraak maken.”',opts:['een','de','het'],a:0},
+ {q:'Wat betekent “Ze zijn spijtig genoeg op”?',opts:['They are unfortunately sold out','They are too expensive','They are not fresh'],a:0},
+ {q:'Kies de natuurlijke zin.',opts:['Morgen ik ga naar de dokter','Morgen ga ik naar de dokter','Morgen naar de dokter ik ga'],a:1},
+ {q:'Wat is een passend antwoord op “Komt dat goed uit?”',opts:['Dat past mij goed','Ik heb het warm','Graag gedaan'],a:0}
+];
+
 
 /* ================= core state ================= */
 const KEY='vlot-v1';
@@ -456,9 +579,14 @@ COURSE.units.forEach(u=>u.items.forEach(it=>{ITEMS[it.id]=it; UNITOF[it.id]=u;})
 const ORDER=COURSE.units.flatMap(u=>u.items.map(i=>i.id));
 
 let S=load();
-function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},errlog:[],set:{rate:80,acc:true,perNew:6,gkey:''}};}
+function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},errlog:[],sessions:[],missions:{},stats:{attempts:{L:0,D:0,P:0,S:0},success:{L:0,D:0,P:0,S:0}},profile:{onboarded:false,name:'Carlos',goal:'daily',minutes:10,placement:null},set:{rate:80,acc:true,perNew:6,gkey:''}};}
 function load(){
-  try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items) return Object.assign(blank(),o);}}catch(e){}
+  try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items){
+    const b=blank(), out=Object.assign(b,o);
+    out.set=Object.assign(b.set,o.set||{}); out.profile=Object.assign(b.profile,o.profile||{});
+    out.sessions=Array.isArray(o.sessions)?o.sessions:[]; out.missions=o.missions||{}; out.stats=o.stats||b.stats;
+    return out;
+  }}}catch(e){}
   return blank();
 }
 let memOnly=false;
@@ -484,6 +612,9 @@ function grade(id,k,q){ // q: 0 again, 3 hard, 4 good, 5 easy
     s.n++; s.due=now+s.iv*DAY;
     S.xp+=(q===3?5:(q===4?10:15));
   }
+  if(!S.stats)S.stats=blank().stats;
+  S.stats.attempts[k]=(S.stats.attempts[k]||0)+1;
+  if(q>=3)S.stats.success[k]=(S.stats.success[k]||0)+1;
   bumpStreak(); save();
 }
 function logErr(k,id,ans,missed){
@@ -506,7 +637,11 @@ function dueList(){
   out.sort((a,b)=>a.due-b.due); return out;
 }
 function newIds(max){
-  const out=[]; for(const id of ORDER){ if(!(S.items[id]&&S.items[id].intro)){ out.push(id); if(out.length>=max) break; } }
+  let order=ORDER;
+  if(S.profile&&S.profile.placement&&S.profile.placement.band==='A2 readiness'){
+    order=ORDER.filter(id=>LEVEL_BY_UNIT[UNITOF[id].id]==='A2').concat(ORDER.filter(id=>LEVEL_BY_UNIT[UNITOF[id].id]==='A1'));
+  }
+  const out=[]; for(const id of order){ if(!(S.items[id]&&S.items[id].intro)){ out.push(id); if(out.length>=max) break; } }
   return out;
 }
 function skillStrength(k){
@@ -576,12 +711,94 @@ function speak(text,rate,cb){
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let recogFailed=false;
 
+/* ================= onboarding, level & teacher plan ================= */
+let draftGoal='daily',draftMinutes=10,placeI=0,placeScore=0;
+function pickGoal(btn){
+  document.querySelectorAll('#goalchoices .choice').forEach(x=>x.classList.remove('selected'));
+  btn.classList.add('selected'); draftGoal=btn.dataset.goal;
+}
+function pickMinutes(btn,n){
+  document.querySelectorAll('#minchoices button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on'); draftMinutes=n;
+}
+function finishOnboarding(){
+  S.profile=Object.assign(S.profile||{}, {onboarded:true,goal:draftGoal,minutes:draftMinutes});
+  save(); go('home');
+}
+function startPlacement(){ placeI=0;placeScore=0;renderPlacement(); }
+function renderPlacement(){
+  const p=PLACEMENT[placeI];
+  document.getElementById('placecount').textContent=(placeI+1)+'/'+PLACEMENT.length;
+  document.getElementById('placeprompt').textContent=p.q;
+  document.getElementById('placesub').textContent=p.sub||'Kies het beste antwoord.';
+  document.getElementById('placeopts').innerHTML=p.opts.map((o,i)=>'<button class="opt" onclick="answerPlacement('+i+')">'+esc(o)+'</button>').join('');
+  if(p.audio) setTimeout(()=>speak(p.audio,85),250);
+}
+function answerPlacement(i){
+  if(i===PLACEMENT[placeI].a) placeScore++;
+  placeI++;
+  if(placeI<PLACEMENT.length) return renderPlacement();
+  const band=placeScore<=2?'A1 starter':placeScore<=4?'A1 developing':'A2 readiness';
+  S.profile.placement={score:placeScore,total:PLACEMENT.length,band,date:Date.now()};
+  S.profile.onboarded=true; S.profile.goal=draftGoal; S.profile.minutes=draftMinutes; save();
+  document.getElementById('placecount').textContent='Klaar';
+  document.getElementById('placeprompt').textContent='Uw startpunt: '+band;
+  document.getElementById('placesub').textContent='Dit is een snelle routekeuze, geen officieel CEFR-examen. Uw leerpad past zich verder aan op wat ge echt kunt.';
+  document.getElementById('placeopts').innerHTML='<div class="card"><div class="levelrow"><div class="levelbadge">'+(band.startsWith('A2')?'A2':'A1')+'</div><div class="levelcopy"><b>'+placeScore+' van '+PLACEMENT.length+' juist</b><p>Vlot blijft luisteren, spreken, schrijven en begrip apart meten.</p></div></div></div><button class="btn primary" style="margin-top:16px" onclick="go(\'home\')">Start mijn leerpad</button>';
+}
+function unitMastery(uid){
+  const u=COURSE.units.find(x=>x.id===uid); if(!u)return 0;
+  let sum=0,total=u.items.length*SKILLS.length;
+  u.items.forEach(it=>SKILLS.forEach(k=>{
+    const item=S.items[it.id], sk=item&&item.sk&&item.sk[k];
+    sum+=sk?Math.min(1,(sk.iv||0)/7):0;
+  }));
+  return total?sum/total:0;
+}
+function curriculumProgress(c){
+  if(!c.units.length)return 0;
+  return c.units.reduce((n,id)=>n+unitMastery(id),0)/c.units.length;
+}
+function currentBand(){
+  const a1=curriculumProgress(CURRICULUM[0]),a2=curriculumProgress(CURRICULUM[1]);
+  if(a1>=.78)return {level:'A2',p:a2,title:CURRICULUM[1].title};
+  return {level:'A1',p:a1,title:CURRICULUM[0].title};
+}
+function weakestSkill(){ return SKILLS.slice().sort((a,b)=>skillStrength(a)-skillStrength(b))[0]; }
+function sessionsThisWeek(){
+  const cut=Date.now()-7*DAY; return (S.sessions||[]).filter(x=>x.t>=cut);
+}
+function renderDailyPlan(){
+  const weak=weakestSkill(),due=dueList().length,min=S.profile.minutes||10;
+  const focus={L:'luisteren naar natuurlijke zinnen',D:'klanken precies herkennen',P:'zelf zinnen opbouwen',S:'hardop antwoorden zonder script'}[weak];
+  const goal={daily:'dagelijks leven',work:'werk en gesprekken',integration:'uw volgende CEFR-mijlpaal'}[S.profile.goal]||'dagelijks leven';
+  document.getElementById('dailyplan').innerHTML='<div class="eyebrow">Uw les van vandaag · '+min+' min</div><h2>'+(due?'Eerst ophalen, dan gebruiken':'Bouw vandaag iets nieuws')+'</h2>'+
+   '<div class="planline"><div class="planicon">↻</div><div><b>'+(due||'Geen')+' herhalingen op het juiste moment</b><span>Actief ophalen voor langetermijngeheugen</span></div></div>'+
+   '<div class="planline"><div class="planicon">🎯</div><div><b>Focus: '+focus+'</b><span>Uw zwakste vaardigheid krijgt extra oefening</span></div></div>'+
+   '<div class="planline"><div class="planicon">💬</div><div><b>Transfer naar '+goal+'</b><span>Van een geoefende zin naar een echte taak</span></div></div>';
+}
+function renderLevelCard(){
+  const b=currentBand(),week=sessionsThisWeek(),mins=week.reduce((n,x)=>n+(x.minutes||0),0);
+  document.getElementById('levelcard').innerHTML='<div class="eyebrow">Aantoonbare vooruitgang</div><div class="levelrow"><div class="levelbadge">'+b.level+'</div><div class="levelcopy"><b>'+esc(b.title)+'</b><p>'+Math.round(b.p*100)+'% beheerst · '+mins+' min geoefend deze week</p><div class="meter"><i style="width:'+Math.round(b.p*100)+'%"></i></div></div></div>'+
+   '<button class="btn ghost" style="margin-top:10px" onclick="renderPath();go(\'path\')">Bekijk wat ik al kan →</button>';
+}
+function canDoDone(c){ return c.units.length>0 && c.units.every(id=>unitMastery(id)>=.55); }
+function renderPath(){
+  document.getElementById('pathzone').innerHTML=CURRICULUM.map(c=>{
+    const p=curriculumProgress(c),coming=c.coming;
+    return '<div class="card"><div class="levelrow"><div class="levelbadge" style="'+(coming?'background:var(--ink3);color:var(--dim)':'')+'">'+c.level+'</div><div class="levelcopy"><b>'+esc(c.title)+'</b><p>'+(coming?'Volgende curriculumfase':Math.round(p*100)+'% duurzaam beheerst')+'</p>'+(coming?'':'<div class="meter"><i style="width:'+Math.round(p*100)+'%"></i></div>')+'</div></div><div style="margin-top:10px">'+c.can.map(x=>{
+      const done=canDoDone(x); return '<div class="cando '+(done?'done':'')+'"><div class="check">'+(done?'✓':'')+'</div><div><b>'+esc(x.label)+'</b><p>'+(coming?'Wordt toegevoegd in de B1-cursus':done?'Bewezen in meerdere vaardigheden':'Nog oefenen in uw dagelijkse lessen')+'</p></div></div>';
+    }).join('')+'</div></div>';
+  }).join('');
+}
+
 /* ================= router / home ================= */
 function go(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('scr-'+name).classList.add('on');
   if(name==='home') renderHome();
   if(name==='settings') renderSettings();
+  if(name==='placement') startPlacement();
   scrollTo(0,0);
 }
 function renderHome(){
@@ -589,6 +806,7 @@ function renderHome(){
   document.getElementById('st-xp').textContent=S.xp;
   const due=dueList().length;
   document.getElementById('st-due').textContent=due;
+  renderDailyPlan(); renderLevelCard();
   const nn=newIds(S.set.perNew).length;
   const b=document.getElementById('btn-session');
   b.textContent = due? ('Start sessie · '+due+' herhalingen'+(nn?' + nieuw':'')) : (nn? 'Start sessie · '+nn+' nieuwe zinnen' : 'Alles geleerd voor nu 🎉');
@@ -624,10 +842,11 @@ function drawDiamond(){
 }
 
 /* ================= session engine ================= */
-let Q=[], QI=0, sessXP=0;
+let Q=[], QI=0, sessXP=0,sessionStart=0;
 function startSession(){
-  const CAP=20;
-  const due=dueList().slice(0,CAP);
+  const CAP=Math.max(8,Math.min(28,Math.round((S.profile.minutes||10)*1.4)));
+  const weak=weakestSkill();
+  const due=dueList().sort((a,b)=>(a.k===weak?-1:0)-(b.k===weak?-1:0)||a.due-b.due).slice(0,CAP);
   Q=due.map(d=>({type:'ex',id:d.id,k:d.k}));
   // interleave: avoid same item back-to-back
   for(let i=1;i<Q.length;i++) if(Q[i].id===Q[i-1].id){
@@ -638,7 +857,7 @@ function startSession(){
     fresh.forEach(id=>{ Q.push({type:'intro',id}); Q.push({type:'ex',id,k:'P'}); });
   }
   if(!Q.length){renderHome();return;}
-  QI=0; sessXP=S.xp;
+  QI=0; sessXP=S.xp; sessionStart=Date.now();
   go('session'); renderEx();
 }
 function quitSession(){ save(); go('home'); }
@@ -649,11 +868,14 @@ function stepDone(){
   renderEx();
 }
 function finishSession(){
+  const minutes=Math.max(1,Math.round((Date.now()-sessionStart)/60000));
+  S.sessions.push({t:Date.now(),minutes,xp:S.xp-sessXP,steps:Q.length});
+  if(S.sessions.length>100)S.sessions=S.sessions.slice(-100);
   const ex=document.getElementById('ex');
   document.getElementById('sess-prog').style.width='100%';
   ex.innerHTML='<div class="done-big">🦁</div>'+
    '<h2 class="big center">Goed gedaan!</h2>'+
-   '<p class="sub center">+'+(S.xp-sessXP)+' XP · streak '+S.streak.n+' dagen</p>'+
+   '<p class="sub center">+'+(S.xp-sessXP)+' XP · '+minutes+' min · streak '+S.streak.n+' dagen</p>'+
    '<div class="foot"><button class="btn primary" onclick="go(\'home\')">Naar het overzicht</button>'+
    '<button class="btn ghost" onclick="startSession()">Nog een sessie</button></div>';
   save();
@@ -701,20 +923,30 @@ function introDone(id){
 
 /* --- listening (audio -> pick meaning) --- */
 function renderListen(it,ex){
-  lTried=false;
+  lTried=false; lAssists=0;
   const pool=ORDER.filter(id=>id!==it.id);
   const opts=[it.en];
   while(opts.length<4){ const c=ITEMS[pool[Math.floor(Math.random()*pool.length)]].en; if(!opts.includes(c)) opts.push(c); }
   opts.sort(()=>Math.random()-.5);
   ex.innerHTML=header('L')+
    '<p class="prompt">Luister. Wat betekent dit?</p>'+
-   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Speel opnieuw</button>'+
-   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Nog eens</button></div>'+
+   '<div class="seg"><button onclick="listenAssist(\''+it.id+'\',this,\'slow\')">1 · Traag</button><button onclick="listenAssist(\''+it.id+'\',this,\'chunks\')">2 · Stukjes</button><button onclick="listenAssist(\''+it.id+'\',this,\'text\')">3 · Tekst</button></div><div id="lhelp"></div>'+
    '<div id="opts">'+opts.map(o=>'<button class="opt" onclick="pickL(this,\''+it.id+'\')">'+esc(o)+'</button>').join('')+'</div>'+
    '<div id="lz"></div><div class="foot" id="lfoot"></div>';
   setTimeout(()=>speak(it.nl),300);
 }
-let lTried=false;
+let lTried=false,lAssists=0;
+function listenAssist(id,btn,kind){
+  lAssists++; btn.classList.add('on'); const it=ITEMS[id],help=document.getElementById('lhelp');
+  if(kind==='slow'){speak(it.nl,60);help.innerHTML='<p class="tiny">Luister naar de beklemtoonde woorden. Probeer eerst de kern te begrijpen.</p>';}
+  if(kind==='chunks'){
+    const words=it.nl.split(' '), chunks=[]; for(let i=0;i<words.length;i+=3)chunks.push(words.slice(i,i+3).join(' '));
+    help.innerHTML='<div class="tipbox">'+chunks.map(esc).join(' &nbsp;·&nbsp; ')+'</div>';
+    let n=0; const next=()=>{if(n<chunks.length)speak(chunks[n++],58,next);};next();
+  }
+  if(kind==='text'){help.innerHTML='<div class="tipbox"><b>'+esc(it.nl)+'</b></div>';speak(it.nl,75);}
+}
 function pickL(btn,id){
   const it=ITEMS[id], right=btn.textContent===it.en;
   if(right){
@@ -726,7 +958,7 @@ function pickL(btn,id){
     btn.classList.add('wrong'); btn.onclick=null; lTried=true; speak(it.nl);
   }
 }
-function afterL(id){ if(lTried) logErr('L',id,''); grade(id,'L', lTried?0:4); lTried=false; stepDone(); }
+function afterL(id){ const struggled=lTried||lAssists>1; if(struggled) logErr('L',id,''); grade(id,'L',lTried?0:(lAssists?3:4)); lTried=false;lAssists=0;stepDone(); }
 
 /* --- typing: dictation (D) or production (P) --- */
 function renderType(it,ex,isDict){
@@ -1062,6 +1294,66 @@ async function askAI(){
   btn.disabled=false; btn.textContent='Vraag de AI-coach';
 }
 
+/* ================= real-world speaking missions ================= */
+let M={mission:null,i:0,answers:[],rec:null};
+function openMissions(){
+  document.getElementById('missionlist').innerHTML=MISSIONS.map(m=>{
+    const done=S.missions[m.id]&&S.missions[m.id].count;
+    return '<div class="card mission"><button style="width:100%;text-align:left" onclick="startMission(\''+m.id+'\')"><div class="levelrow"><div class="levelbadge" style="background:var(--ink3);color:var(--paper)">'+m.icon+'</div><div class="levelcopy"><div class="eyebrow">'+m.level+(done?' · '+done+'× voltooid':'')+'</div><b>'+esc(m.title)+'</b><p>'+esc(m.goal)+'</p></div><span class="chev">›</span></div></button></div>';
+  }).join(''); go('missions');
+}
+function startMission(id){
+  M={mission:MISSIONS.find(x=>x.id===id),i:0,answers:[],rec:null}; go('mission');renderMission();
+}
+function renderMission(){
+  const m=M.mission,t=m.turns[M.i];
+  document.getElementById('missioncount').textContent=(M.i+1)+'/'+m.turns.length;
+  const history=[];
+  for(let i=0;i<M.i;i++){history.push('<div class="bubble them"><small>Gesprekspartner</small>'+esc(m.turns[i].them)+'</div>');history.push('<div class="bubble me"><small>Gij</small>'+esc(M.answers[i])+'</div>');}
+  history.push('<div class="bubble them"><small>Gesprekspartner</small>'+esc(t.them)+'</div>');
+  document.getElementById('missionzone').innerHTML='<div class="eyebrow">'+m.level+' · '+esc(m.goal)+'</div><h2 class="big">'+m.icon+' '+esc(m.title)+'</h2><div class="chat">'+history.join('')+'</div>'+
+   '<div class="card"><div class="eyebrow">Antwoord hardop</div><button class="mic" style="width:68px;height:68px;font-size:27px;margin-top:14px" onclick="missionListen()">🎙</button><p class="miclab" id="missionlab">Tik en spreek. Een natuurlijk antwoord is goed.</p><input id="missioninput" type="text" placeholder="Of gebruik de microfoon van uw toetsenbord…"><div id="missionfeedback"></div><button class="btn primary" style="margin-top:12px" onclick="missionSubmit(document.getElementById(\'missioninput\').value)">Controleer mijn antwoord</button><button class="btn ghost" onclick="missionHint()">Ik zit vast · geef een kleine hint</button></div>';
+  setTimeout(()=>speak(t.them,88),300);
+}
+function missionHint(){
+  const t=M.mission.turns[M.i],first=t.model.split(' ').slice(0,3).join(' ');
+  document.getElementById('missionfeedback').innerHTML='<div class="tipbox">Begin zo: <b>'+esc(first)+'…</b></div>';
+  speak(first,70);
+}
+function missionListen(){
+  const lab=document.getElementById('missionlab');
+  if(!SR){lab.textContent='Gebruik de microfoon van uw toetsenbord in het veld hieronder.';document.getElementById('missioninput').focus();return;}
+  try{
+    const r=new SR();M.rec=r;r.lang=(VOICE&&/be/i.test(VOICE.lang))?'nl-BE':'nl-NL';r.interimResults=false;r.maxAlternatives=3;
+    r.onstart=()=>lab.textContent='Ik luister…';
+    r.onerror=()=>{lab.textContent='Niet gelukt. Gebruik de microfoon van uw toetsenbord.';document.getElementById('missioninput').focus();};
+    r.onresult=e=>{let best='';for(let i=0;i<e.results[0].length;i++)if(e.results[0][i].transcript.length>best.length)best=e.results[0][i].transcript;document.getElementById('missioninput').value=best;lab.textContent='Gehoord: '+best;missionSubmit(best);};
+    r.start();
+  }catch(e){lab.textContent='Gebruik de microfoon van uw toetsenbord.';}
+}
+function missionQuality(t,answer){
+  const a=norm(answer); if(!a)return 0;
+  let best=0;
+  (t.alts||[t.model]).forEach(x=>{const n=norm(x),sim=1-lev(a,n)/Math.max(a.length,n.length,1);best=Math.max(best,sim);});
+  const hits=(t.keys||[]).filter(k=>a.includes(norm(k))).length/Math.max(1,(t.keys||[]).length);
+  return Math.max(best,hits*.85);
+}
+function missionSubmit(answer){
+  if(!answer.trim())return;
+  const t=M.mission.turns[M.i],q=missionQuality(t,answer),good=q>=.52;
+  M.pending=answer.trim();
+  document.getElementById('missionfeedback').innerHTML='<div class="verdict '+(good?'good':'near')+'"><b>'+(good?'Goed gereageerd.':'Dat werkt bijna.')+'</b><div class="tiny">Een natuurlijk modelantwoord:</div><div class="target">'+esc(t.model)+'</div>'+(good?'<div class="tiny">Uw boodschap is duidelijk. Let nu op ritme en spreek zonder te lezen.</div>':'<div class="tiny">Vergelijk de sleutelwoorden en probeer het model één keer hardop.</div>')+'</div>'+
+   '<button class="speakbtn" onclick="speak(M.mission.turns[M.i].model,75)">🔊 Luister</button><button class="btn primary" style="margin-top:12px" onclick="missionNext()">'+(M.i===M.mission.turns.length-1?'Missie afronden':'Ga verder →')+'</button>';
+  speak(t.model,75);
+}
+function missionNext(){
+  M.answers[M.i]=M.pending||M.mission.turns[M.i].model; M.i++;
+  if(M.i<M.mission.turns.length)return renderMission();
+  const m=M.mission,old=S.missions[m.id]||{count:0}; old.count++;old.last=Date.now();S.missions[m.id]=old;S.xp+=25;bumpStreak();save();
+  document.getElementById('missioncount').textContent='Klaar';
+  document.getElementById('missionzone').innerHTML='<div class="done-big">🎯</div><h2 class="big center">Missie geslaagd</h2><p class="sub center">Ge hebt '+m.turns.length+' spontane antwoorden gegeven. Dat is de brug van kennen naar kunnen.</p><div class="card"><div class="eyebrow">Volgende stap</div><p style="margin-top:8px">Doe dezelfde missie later nog eens, maar kijk pas naar het model nadat ge geantwoord hebt. Probeer elke keer iets vrijer te spreken.</p></div><div class="foot"><button class="btn primary" onclick="startMission(\''+m.id+'\')">Nog eens, iets vlotter</button><button class="btn" onclick="openMissions()">Andere missie</button><button class="btn ghost" onclick="go(\'home\')">Naar overzicht</button></div>';
+}
+
 /* ================= units browser ================= */
 function renderUnits(){
   const el=document.getElementById('unitlist');
@@ -1139,6 +1431,10 @@ function shPlayRec(){
 
 /* ================= settings ================= */
 function renderSettings(){
+  const mn=document.getElementById('set-min');mn.value=S.profile.minutes||10;
+  document.getElementById('set-minlab').textContent=(S.profile.minutes||10)+' min';
+  mn.oninput=e=>{S.profile.minutes=+e.target.value;document.getElementById('set-minlab').textContent=e.target.value+' min';save();};
+  const goal=document.getElementById('set-goal');goal.value=S.profile.goal||'daily';goal.onchange=e=>{S.profile.goal=e.target.value;save();};
   const r=document.getElementById('set-rate'); r.value=S.set.rate;
   document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';
   r.oninput=e=>{S.set.rate=+e.target.value;document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';save();};
@@ -1163,7 +1459,7 @@ function doImport(inp){
 }
 function doReset(){ if(confirm('Alle voortgang wissen?')){S=blank();save();go('home');} }
 
-go('home');
+go(S.profile&&S.profile.onboarded?'home':'onboard');
 /* offline support when hosted on https (GitHub Pages etc.) */
 if('serviceWorker' in navigator && location.protocol==='https:'){
   navigator.serviceWorker.register('sw.js').catch(()=>{});

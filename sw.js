@@ -1,5 +1,5 @@
-const CACHE = 'vlot-v5';
-const ASSETS = ['./', './index.html', './sw.js', './manifest.webmanifest', './icon-512.png'];
+const CACHE = 'vlot-v6';
+const ASSETS = ['./', './index.html', './course-advanced.js', './audio/recordings.js', './sw.js', './manifest.webmanifest', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

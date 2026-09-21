@@ -54,7 +54,19 @@ Recognition alone does not prepare a learner to take a turn. Vlot makes the lear
 
 Streaks and XP support habit formation but can reward tapping rather than competence. Vlot keeps them as motivational signals while its level meter uses repeated performance over time across four skills. A CEFR label is presented as curriculum progress, not certification.
 
-## What changed in release 5
+## What changed in release 6
+
+- Complete technical A1–B2 route: 28 units and 316 sentence targets.
+- B1 tasks for connected narrative, workplace interaction, complaints, opinions, summaries and presentations.
+- B2 tasks for sustained argument, negotiation, critical media use, formal writing, mediation and spontaneous repair.
+- Level-aware free AI conversation with one-focus correction and separate task, comprehensibility, grammar, vocabulary and transcript-derived fluency scores.
+- Production-safe AI proxy example with origin restriction, server-side provider key and hourly rate limiting.
+- Repeatable outcome checkpoints plus delayed retrieval, independent listening, mission and can-do metrics.
+- Native-recording manifest and automatic fallback to a selected `nl-BE` device voice.
+- Transparent sound-level cues that do not falsely claim acoustic phoneme accuracy.
+- Formal curriculum review and native-audio production gates.
+
+## Earlier foundation in release 5
 
 - Goal and time-budget onboarding.
 - Six-item route-selection scan with an explicit non-certification disclaimer.
@@ -67,21 +79,21 @@ Streaks and XP support habit formation but can reward tapping rather than compet
 - Better accessibility focus states and reduced-motion support.
 - State migration so existing learner progress is retained.
 
-## Roadmap: what is required before calling Vlot a complete digital teacher
+## Roadmap: what is required before making “best app” or efficacy claims
 
-### Next: validated A1–A2 curriculum
+### Next: independent validation and native production
 
-- Expand from 156 isolated sentences to sequenced lessons containing dialogue, grammar noticing, controlled practice, free production, and cumulative review.
+- Convert the 316 sentence targets into teacher-reviewed lesson sequences containing dialogue, grammar noticing, controlled practice, free production, and cumulative review.
 - Have Belgian Dutch teachers review register, regional variation, translations, distractors, and CEFR alignment.
 - Replace synthetic-only audio with consented native Belgian recordings at natural and learner-adjusted speeds.
 - Add reading, extended listening, and interaction assessments at the end of each unit.
 
-### Then: B1–B2 and a genuine conversation tutor
+### Then: acoustic speech assessment and richer media
 
-- Branching AI roleplay constrained by the learner's level, goal, and studied language.
-- Feedback separated into task success, comprehensibility, grammar, vocabulary, fluency, and pronunciation.
+- Validate a Dutch-capable acoustic pronunciation engine on non-native Belgian-Dutch learners before exposing phoneme scores.
+- Add consented native dialogues and extended listening at every level.
 - Conversation memory based on recurring errors and mastered constructions, not unrestricted personal data.
-- Topic packs for Belgium: gemeente, school, healthcare, work, housing, and social life.
+- Expand topic packs for Belgium: education, government, healthcare, work, housing, culture and social life.
 
 ### Measurement and validation
 

@@ -147,7 +147,7 @@ audio{width:100%;margin-top:10px}
     <button class="choice" data-goal="integration" onclick="pickGoal(this)"><b>Integratie en niveau halen</b><span>Een duidelijke route van A1 naar zelfstandig Nederlands</span></button>
   </div>
   <div class="card"><div class="eyebrow">Dagelijks ritme</div><div class="seg" id="minchoices"><button onclick="pickMinutes(this,5)">5 min</button><button class="on" onclick="pickMinutes(this,10)">10 min</button><button onclick="pickMinutes(this,15)">15 min</button><button onclick="pickMinutes(this,20)">20 min</button></div></div>
-  <div class="foot"><button class="btn primary" onclick="finishOnboarding()">Maak mijn lesplan</button><button class="btn ghost" onclick="go('placement')">Doe eerst de niveauscan · 2 min</button></div>
+  <div class="foot"><button class="btn primary" onclick="finishOnboarding()">Maak mijn lesplan</button><button class="btn ghost" onclick="go('placement')">Doe eerst de niveauscan · 4 min</button></div>
 </div>
 
 <!-- PLACEMENT -->
@@ -177,8 +177,10 @@ audio{width:100%;margin-top:10px}
   <div class="card" id="levelcard"></div>
   <div class="foot">
     <button class="btn primary" id="btn-session" onclick="startSession()">Start mijn les</button>
+    <button class="btn" onclick="openAIConversation()">AI-gesprek &mdash; vrij spreken met uw leraar</button>
     <button class="btn" onclick="openMissions()">Spreekmissies &mdash; oefen echte situaties</button>
     <button class="btn" onclick="renderPath();go('path')">Mijn leerpad &mdash; CEFR-doelen</button>
+    <button class="btn" onclick="renderOutcomes();go('outcomes')">Mijn resultaten &mdash; wat verbetert echt?</button>
     <button class="btn" onclick="openShadowPick()">Schaduwstudio &mdash; luister &amp; spreek na</button>
     <button class="btn" onclick="renderLab();go('lab')">Uitspraaklab &mdash; de moeilijke klanken</button>
     <button class="btn" onclick="renderCoach();go('coach')">Coach &mdash; wat loopt mis &amp; hoe verbeteren</button>
@@ -203,6 +205,25 @@ audio{width:100%;margin-top:10px}
   <div class="topbar"><button class="back" onclick="openMissions()">&#8592; Missies</button><span class="pill" id="missioncount"></span></div><div id="missionzone"></div>
 </div>
 
+<!-- AI CONVERSATION -->
+<div class="screen" id="scr-airoom">
+  <div class="topbar"><button class="back" onclick="stopAIConversation();go('home')">&#8592; Terug</button><span class="pill" id="ailevel"></span></div>
+  <div class="eyebrow">Vrij gesprek met feedback</div><h2 class="big">AI-gespreksleraar</h2>
+  <div id="aisetup"></div><div id="aichat" class="chat"></div><div id="aicomposer"></div>
+</div>
+
+<!-- MEASURED OUTCOMES -->
+<div class="screen" id="scr-outcomes">
+  <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
+  <div class="eyebrow">Leerresultaten</div><h2 class="big">Bewijs dat ge vooruitgaat</h2><p class="sub">XP meet activiteit. Hier meten we ophalen na een pauze, luisteren zonder hulp, spreken en echte taken.</p><div id="outcomezone"></div>
+</div>
+
+<!-- CHECKPOINT -->
+<div class="screen" id="scr-checkpoint">
+  <div class="topbar"><button class="back" onclick="go('outcomes')">&#8592; Stop</button><span class="pill" id="checkpointcount"></span></div>
+  <div class="eyebrow">Voortgangsmeting</div><div id="checkpointzone"></div>
+</div>
+
 <!-- SESSION -->
 <div class="screen" id="scr-session">
   <div class="topbar">
@@ -216,7 +237,7 @@ audio{width:100%;margin-top:10px}
 <!-- UNITS -->
 <div class="screen" id="scr-units">
   <div class="topbar"><button class="back" onclick="go('home')">&#8592; Terug</button></div>
-  <div class="eyebrow">12 eenheden &middot; 156 zinnen</div>
+  <div class="eyebrow">28 eenheden &middot; 316 zinnen &middot; A1–B2</div>
   <div class="card" id="unitlist"></div>
 </div>
 
@@ -305,13 +326,19 @@ audio{width:100%;margin-top:10px}
   <div class="card">
     <label class="tog">Spreektempo <span id="set-ratelab"></span></label>
     <input type="range" class="range" id="set-rate" min="55" max="110" step="5">
+    <label class="tog">Nederlandse stem</label>
+    <select id="set-voice" style="width:100%;background:var(--ink3);color:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit"><option value="">Automatisch · liefst Belgisch</option></select>
     <label class="tog" style="margin-top:8px">Accenten negeren bij typen
       <input type="checkbox" id="set-acc"></label>
     <label class="tog">Nieuwe zinnen per sessie <span id="set-newlab"></span></label>
     <input type="range" class="range" id="set-new" min="2" max="12" step="1">
     <label class="tog" style="margin-top:8px">Gemini API-sleutel (AI-coach)</label>
-    <input type="text" id="set-gkey" autocomplete="off" placeholder="Plak hier uw gratis sleutel van aistudio.google.com">
-    <p class="tiny">The key stays only on this phone (local storage). Free at aistudio.google.com &rarr; "Get API key" with any Google account.</p>
+    <input type="password" id="set-gkey" autocomplete="off" placeholder="Plak hier uw gratis sleutel van aistudio.google.com">
+    <label class="tog">Veilige AI-endpoint (optioneel)</label>
+    <input type="text" id="set-aiendpoint" autocomplete="off" placeholder="https://uw-worker.example.com/vlot-ai">
+    <label class="tog">Akoestische uitspraak-endpoint (optioneel)</label>
+    <input type="text" id="set-speechendpoint" autocomplete="off" placeholder="https://uw-service.example.com/pronunciation">
+    <p class="tiny">Voor persoonlijk testen kan een Gemini-sleutel lokaal blijven. Voor echte gebruikers is een eigen beveiligde endpoint beter: de provider-sleutel komt dan nooit in de app of browser terecht.</p>
   </div>
   <div class="card">
     <div class="eyebrow">Voortgang bewaren</div>
@@ -327,9 +354,12 @@ audio{width:100%;margin-top:10px}
     <div class="eyebrow">De methode</div>
     <p class="tiny" style="margin-top:8px">Elke zin wordt apart getraind als <b style="color:var(--lucht)">luisteren</b>, <b style="color:var(--weide)">dictee</b>, <b style="color:var(--leeuw)">schrijven</b> en <b style="color:var(--klaproos)">spreken</b>. Vlot plant herhaling wanneer ge dreigt te vergeten, geeft extra gewicht aan uw zwakste vaardigheid en eindigt met gebruik in een echte situatie. Spreken klimt van nazeggen met tekst naar een spontaan antwoord zonder script.</p>
   </div>
+  <div class="card"><div class="eyebrow">Kwaliteitsstatus</div><p class="tiny" style="margin-top:8px">CEFR A1–B2 is inhoudelijk opgebouwd en technisch controleerbaar. De geavanceerde lessen hebben nog onafhankelijke NT2/Vlaams-docentreview en native audio-opnames nodig voordat Vlot ze als professioneel gevalideerd mag presenteren.</p></div>
 </div>
 
 </div>
+<script src="audio/recordings.js"></script>
+<script src="course-advanced.js"></script>
 <script>
 const COURSE = {
 units: [
@@ -515,6 +545,8 @@ units: [
 ]}
 ]};
 
+if(typeof ADVANCED_UNITS!=='undefined') COURSE.units.push(...ADVANCED_UNITS);
+
 /* ================= curriculum & real-world missions ================= */
 const CURRICULUM=[
  {level:'A1',title:'Overleven en contact maken',units:['u1','u2','u3','u4','u5','u6'],can:[
@@ -531,9 +563,20 @@ const CURRICULUM=[
   {id:'a2-health',label:'Ik kan klachten uitleggen en een doktersafspraak regelen.',units:['u11']},
   {id:'a2-travel',label:'Ik kan zelfstandig informatie over een reis uitwisselen.',units:['u12']}
  ]},
- {level:'B1',title:'Gesprekken voeren en ervaringen uitleggen',units:[],coming:true,can:[
-  {id:'b1-story',label:'Ik kan ervaringen, plannen en meningen samenhangend vertellen.',units:[]},
-  {id:'b1-work',label:'Ik kan deelnemen aan gewone gesprekken op het werk.',units:[]}
+ {level:'B1',title:'Zelfverzekerd deelnemen en uitleggen',units:['u13','u14','u15','u16','u17','u18','u19','u20'],can:[
+  {id:'b1-work',label:'Ik kan updates geven, prioriteiten verduidelijken en acties afspreken.',units:['u13','u20']},
+  {id:'b1-problem',label:'Ik kan een probleem uitleggen en over een oplossing onderhandelen.',units:['u14','u17']},
+  {id:'b1-story',label:'Ik kan ervaringen samenhangend vertellen en erop doorvragen.',units:['u15']},
+  {id:'b1-opinion',label:'Ik kan mijn mening onderbouwen en respectvol reageren.',units:['u16']},
+  {id:'b1-summary',label:'Ik kan nieuws en gezondheidsinformatie samenvatten en bespreken.',units:['u18','u19']}
+ ]},
+ {level:'B2',title:'Vlot, precies en genuanceerd communiceren',units:['u21','u22','u23','u24','u25','u26','u27','u28'],can:[
+  {id:'b2-argue',label:'Ik kan een standpunt nuanceren en met argumenten verdedigen.',units:['u21','u24']},
+  {id:'b2-negotiate',label:'Ik kan belangen onderzoeken, voorwaarden stellen en onderhandelen.',units:['u22','u23']},
+  {id:'b2-evaluate',label:'Ik kan bronnen, bewijs en formuleringen kritisch beoordelen.',units:['u25']},
+  {id:'b2-formal',label:'Ik kan formeel, helder en diplomatisch schrijven.',units:['u26']},
+  {id:'b2-mediate',label:'Ik kan complexe informatie samenvatten en standpunten bemiddelen.',units:['u27']},
+  {id:'b2-fluent',label:'Ik kan spontaan reageren, herstellen en mijn formulering aanpassen.',units:['u28']}
  ]}
 ];
 const LEVEL_BY_UNIT={}; CURRICULUM.forEach(c=>c.units.forEach(id=>LEVEL_BY_UNIT[id]=c.level));
@@ -557,6 +600,26 @@ const MISSIONS=[
   {them:'We moeten de levering volgende week versnellen.',model:'Kunt u uitleggen waarom dat nodig is?',alts:['Kunt u uitleggen waarom dat nodig is?','Waarom is dat nodig?'],keys:['waarom','uitleggen']},
   {them:'De klant heeft de datum naar voren geschoven.',model:'Begrijp ik het goed dat de datum veranderd is?',alts:['Begrijp ik het goed dat de datum veranderd is?'],keys:['begrijp','datum']},
   {them:'Ja, precies. Kunt u vandaag de planning aanpassen?',model:'Ja. Ik pas de planning vandaag aan en stuur een update.',alts:['Ik pas de planning vandaag aan en stuur een update.'],keys:['planning','update']}
+ ]},
+ {id:'status',level:'B1',icon:'📊',title:'Een statusupdate geven',goal:'Leg voortgang en risico uit en stel een actie voor.',turns:[
+  {them:'Carlos, kunt u kort zeggen hoe het project ervoor staat?',model:'We liggen op schema, maar er is één risico.',alts:['We liggen op schema, maar er is één risico.'],keys:['schema','risico']},
+  {them:'Welk risico bedoelt u precies?',model:'De levering kan twee dagen vertraging oplopen.',alts:['De levering kan twee dagen vertraging oplopen.'],keys:['levering','vertraging']},
+  {them:'Wat stelt u voor om dat op te vangen?',model:'Ik stel voor dat we de planning aanpassen en vrijdag opnieuw opvolgen.',alts:['Ik stel voor dat we de planning aanpassen.'],keys:['stel voor','planning']}
+ ]},
+ {id:'klacht',level:'B1',icon:'📦',title:'Een klacht oplossen',goal:'Blijf beleefd, verduidelijk het probleem en bereik een oplossing.',turns:[
+  {them:'Klantendienst, waarmee kan ik u helpen?',model:'Mijn pakket is beschadigd aangekomen en ik zou graag een oplossing vinden.',alts:['Het pakket is beschadigd aangekomen.'],keys:['pakket','beschadigd']},
+  {them:'Dat is vervelend. Hebt u daar een foto van?',model:'Ja. Kunt u nakijken of een vervanging mogelijk is?',alts:['Is een vervanging mogelijk?'],keys:['vervanging','mogelijk']},
+  {them:'We kunnen morgen een nieuw pakket versturen.',model:'Dat voorstel lijkt mij redelijk. Kunt u het per e-mail bevestigen?',alts:['Kunt u dat per e-mail bevestigen?'],keys:['voorstel','bevestigen']}
+ ]},
+ {id:'onderhandeling',level:'B2',icon:'🤝',title:'Onderhandelen over voorwaarden',goal:'Onderzoek belangen en formuleer een voorwaardelijk compromis.',turns:[
+  {them:'Voor ons is een lagere prijs de belangrijkste voorwaarde.',model:'Ik begrijp dat de prijs belangrijk is. Voor ons is vooral de leveringszekerheid doorslaggevend.',alts:['Voor ons is de leveringszekerheid doorslaggevend.'],keys:['leveringszekerheid']},
+  {them:'Welke ruimte ziet u dan voor een akkoord?',model:'We kunnen met de prijs meegaan, mits de volumes gegarandeerd zijn.',alts:['Mits de volumes gegarandeerd zijn, kunnen we met de prijs meegaan.'],keys:['mits','volumes']},
+  {them:'Dat lijkt haalbaar. Hoe gaan we verder?',model:'Laten we de akkoordpunten vastleggen; ik stuur morgen een aangepaste overeenkomst.',alts:['Ik stuur morgen een aangepaste overeenkomst.'],keys:['vastleggen','overeenkomst']}
+ ]},
+ {id:'debat',level:'B2',icon:'⚖️',title:'Een standpunt nuanceren',goal:'Erken een argument, voeg een bezwaar toe en trek een afgewogen conclusie.',turns:[
+  {them:'Thuiswerken is altijd beter voor werknemers en bedrijven.',model:'Het heeft duidelijke voordelen, maar de situatie ligt iets ingewikkelder.',alts:['Dat ligt iets ingewikkelder.'],keys:['voordelen','ingewikkelder']},
+  {them:'Welk bezwaar ziet u dan?',model:'Spontaan overleg wordt moeilijker en niet iedereen heeft thuis dezelfde mogelijkheden.',alts:['Niet iedereen heeft dezelfde mogelijkheden.'],keys:['overleg','mogelijkheden']},
+  {them:'Wat zou volgens u dan de beste oplossing zijn?',model:'Alles afwegend lijkt een flexibele combinatie mij het meest verstandig.',alts:['Een combinatie lijkt mij het meest praktisch.'],keys:['combinatie','verstandig']}
  ]}
 ];
 const PLACEMENT=[
@@ -565,7 +628,13 @@ const PLACEMENT=[
  {q:'Vul aan: “Ik wil graag ___ afspraak maken.”',opts:['een','de','het'],a:0},
  {q:'Wat betekent “Ze zijn spijtig genoeg op”?',opts:['They are unfortunately sold out','They are too expensive','They are not fresh'],a:0},
  {q:'Kies de natuurlijke zin.',opts:['Morgen ik ga naar de dokter','Morgen ga ik naar de dokter','Morgen naar de dokter ik ga'],a:1},
- {q:'Wat is een passend antwoord op “Komt dat goed uit?”',opts:['Dat past mij goed','Ik heb het warm','Graag gedaan'],a:0}
+ {q:'Wat is een passend antwoord op “Komt dat goed uit?”',opts:['Dat past mij goed','Ik heb het warm','Graag gedaan'],a:0},
+ {q:'Kies de beste samenvatting: “Hoewel de trein vertraging had, kwam ik nog net op tijd.”',opts:['The train arrived early','Despite the delay, I was just on time','I missed the train'],a:1},
+ {q:'Kies de natuurlijke reactie op een mening.',opts:['Ik ben gedeeltelijk met u eens','Ik ben het gedeeltelijk met u eens','Ik gedeeltelijk ben met u eens'],a:1},
+ {q:'Wat doet “Daar staat tegenover dat…”?',opts:['Het geeft een tegenstelling','Het noemt een tijdstip','Het beëindigt een gesprek'],a:0},
+ {q:'Welke zin nuanceert een conclusie?',opts:['Dat is altijd zo','Voor zover de cijfers betrouwbaar zijn, klopt dat','Daar is geen discussie over'],a:1},
+ {q:'Wat betekent “onder voorbehoud van goedkeuring”?',opts:['Approval has already been refused','It depends on approval still being given','Approval is unnecessary'],a:1},
+ {q:'Welke zin bemiddelt tussen twee standpunten?',opts:['U hebt allebei ongelijk','Beide partijen willen hetzelfde resultaat, maar verschillen over de aanpak','We stoppen de discussie'],a:1}
 ];
 
 
@@ -579,12 +648,13 @@ COURSE.units.forEach(u=>u.items.forEach(it=>{ITEMS[it.id]=it; UNITOF[it.id]=u;})
 const ORDER=COURSE.units.flatMap(u=>u.items.map(i=>i.id));
 
 let S=load();
-function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},errlog:[],sessions:[],missions:{},stats:{attempts:{L:0,D:0,P:0,S:0},success:{L:0,D:0,P:0,S:0}},profile:{onboarded:false,name:'Carlos',goal:'daily',minutes:10,placement:null},set:{rate:80,acc:true,perNew:6,gkey:''}};}
+function blank(){return {xp:0,streak:{n:0,last:null},items:{},trouble:{},errlog:[],sessions:[],missions:{},checkpoints:[],stats:{attempts:{L:0,D:0,P:0,S:0},success:{L:0,D:0,P:0,S:0},listenNoHelp:0,listenTotal:0,hints:0,missionScores:[],aiScores:[]},profile:{onboarded:false,name:'Carlos',goal:'daily',minutes:10,placement:null},set:{rate:80,voice:'',acc:true,perNew:6,gkey:'',aiEndpoint:'',speechEndpoint:''}};}
 function load(){
   try{const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); if(o&&o.items){
     const b=blank(), out=Object.assign(b,o);
     out.set=Object.assign(b.set,o.set||{}); out.profile=Object.assign(b.profile,o.profile||{});
-    out.sessions=Array.isArray(o.sessions)?o.sessions:[]; out.missions=o.missions||{}; out.stats=o.stats||b.stats;
+    out.sessions=Array.isArray(o.sessions)?o.sessions:[]; out.missions=o.missions||{}; out.checkpoints=Array.isArray(o.checkpoints)?o.checkpoints:[];
+    out.stats=Object.assign(b.stats,o.stats||{});out.stats.attempts=Object.assign(b.stats.attempts,(o.stats&&o.stats.attempts)||{});out.stats.success=Object.assign(b.stats.success,(o.stats&&o.stats.success)||{});
     return out;
   }}}catch(e){}
   return blank();
@@ -638,8 +708,10 @@ function dueList(){
 }
 function newIds(max){
   let order=ORDER;
-  if(S.profile&&S.profile.placement&&S.profile.placement.band==='A2 readiness'){
-    order=ORDER.filter(id=>LEVEL_BY_UNIT[UNITOF[id].id]==='A2').concat(ORDER.filter(id=>LEVEL_BY_UNIT[UNITOF[id].id]==='A1'));
+  if(S.profile&&S.profile.placement&&/readiness/.test(S.profile.placement.band)){
+    const target=S.profile.placement.band.split(' ')[0],levels=CURRICULUM.map(c=>c.level),at=levels.indexOf(target);
+    const priority=[target].concat(levels.slice(0,at).reverse(),levels.slice(at+1));
+    order=priority.flatMap(l=>ORDER.filter(id=>LEVEL_BY_UNIT[UNITOF[id].id]===l));
   }
   const out=[]; for(const id of order){ if(!(S.items[id]&&S.items[id].intro)){ out.push(id); if(out.length>=max) break; } }
   return out;
@@ -685,13 +757,15 @@ function lcsMark(target,saidArr){ // returns per-target-word boolean matched
   return {mark,score:m?mark.filter(Boolean).length/m:0,T};
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(t){return esc(String(t)).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 /* ================= speech (TTS) ================= */
 let VOICE=null;
 function pickVoice(){
   if(!('speechSynthesis' in window)) return;
   const vs=speechSynthesis.getVoices();
-  VOICE = vs.find(v=>/nl[-_]BE/i.test(v.lang))
+  VOICE = (S.set.voice&&vs.find(v=>v.name===S.set.voice))
+       || vs.find(v=>/nl[-_]BE/i.test(v.lang))
        || vs.find(v=>/belg|vlaams|flem/i.test(v.name))
        || vs.find(v=>/^nl/i.test(v.lang)) || null;
 }
@@ -705,6 +779,17 @@ function speak(text,rate,cb){
   u.rate=(rate||S.set.rate)/100;
   if(cb) u.onend=cb;
   speechSynthesis.speak(u);
+}
+let MODEL_AUDIO=null;
+function playItem(id,rate,cb){
+  const rec=typeof NATIVE_AUDIO!=='undefined'&&NATIVE_AUDIO[id];
+  if(!rec)return speak(ITEMS[id].nl,rate,cb);
+  try{
+    if('speechSynthesis' in window)speechSynthesis.cancel();
+    if(MODEL_AUDIO){MODEL_AUDIO.pause();MODEL_AUDIO=null;}
+    const a=new Audio(rec.src);MODEL_AUDIO=a;a.playbackRate=(rate||S.set.rate)/100;a.onended=()=>{MODEL_AUDIO=null;if(cb)cb();};
+    a.play().catch(()=>speak(ITEMS[id].nl,rate,cb));
+  }catch(e){speak(ITEMS[id].nl,rate,cb);}
 }
 
 /* ================= speech recognition ================= */
@@ -738,13 +823,14 @@ function answerPlacement(i){
   if(i===PLACEMENT[placeI].a) placeScore++;
   placeI++;
   if(placeI<PLACEMENT.length) return renderPlacement();
-  const band=placeScore<=2?'A1 starter':placeScore<=4?'A1 developing':'A2 readiness';
+  const band=placeScore<=3?'A1 starter':placeScore<=6?'A2 readiness':placeScore<=9?'B1 readiness':'B2 readiness';
   S.profile.placement={score:placeScore,total:PLACEMENT.length,band,date:Date.now()};
   S.profile.onboarded=true; S.profile.goal=draftGoal; S.profile.minutes=draftMinutes; save();
   document.getElementById('placecount').textContent='Klaar';
   document.getElementById('placeprompt').textContent='Uw startpunt: '+band;
   document.getElementById('placesub').textContent='Dit is een snelle routekeuze, geen officieel CEFR-examen. Uw leerpad past zich verder aan op wat ge echt kunt.';
-  document.getElementById('placeopts').innerHTML='<div class="card"><div class="levelrow"><div class="levelbadge">'+(band.startsWith('A2')?'A2':'A1')+'</div><div class="levelcopy"><b>'+placeScore+' van '+PLACEMENT.length+' juist</b><p>Vlot blijft luisteren, spreken, schrijven en begrip apart meten.</p></div></div></div><button class="btn primary" style="margin-top:16px" onclick="go(\'home\')">Start mijn leerpad</button>';
+  const lvl=band.split(' ')[0];
+  document.getElementById('placeopts').innerHTML='<div class="card"><div class="levelrow"><div class="levelbadge">'+lvl+'</div><div class="levelcopy"><b>'+placeScore+' van '+PLACEMENT.length+' juist</b><p>Vlot blijft luisteren, spreken, schrijven en begrip apart meten.</p></div></div></div><button class="btn primary" style="margin-top:16px" onclick="go(\'home\')">Start mijn leerpad</button>';
 }
 function unitMastery(uid){
   const u=COURSE.units.find(x=>x.id===uid); if(!u)return 0;
@@ -760,9 +846,15 @@ function curriculumProgress(c){
   return c.units.reduce((n,id)=>n+unitMastery(id),0)/c.units.length;
 }
 function currentBand(){
-  const a1=curriculumProgress(CURRICULUM[0]),a2=curriculumProgress(CURRICULUM[1]);
-  if(a1>=.78)return {level:'A2',p:a2,title:CURRICULUM[1].title};
-  return {level:'A1',p:a1,title:CURRICULUM[0].title};
+  const progress=CURRICULUM.map(curriculumProgress);
+  for(let i=0;i<CURRICULUM.length-1;i++)if(progress[i]<.78){
+    if(!Object.keys(S.items).length&&S.profile.placement){
+      const pi=Math.max(0,CURRICULUM.findIndex(c=>S.profile.placement.band.startsWith(c.level)));
+      const c=CURRICULUM[pi];return {level:c.level,p:progress[pi],title:c.title};
+    }
+    return {level:CURRICULUM[i].level,p:progress[i],title:CURRICULUM[i].title};
+  }
+  const last=CURRICULUM.length-1;return {level:CURRICULUM[last].level,p:progress[last],title:CURRICULUM[last].title};
 }
 function weakestSkill(){ return SKILLS.slice().sort((a,b)=>skillStrength(a)-skillStrength(b))[0]; }
 function sessionsThisWeek(){
@@ -799,6 +891,7 @@ function go(name){
   if(name==='home') renderHome();
   if(name==='settings') renderSettings();
   if(name==='placement') startPlacement();
+  if(name==='outcomes') renderOutcomes();
   scrollTo(0,0);
 }
 function renderHome(){
@@ -902,12 +995,12 @@ function renderIntro(it,ex){
    '<div class="big">'+esc(it.nl)+'</div>'+
    '<div class="mid" style="color:var(--dim)">'+esc(it.en)+'</div>'+
    (it.note?'<div class="note">'+esc(it.note)+'</div>':'')+
-   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Beluister</button>'+
-   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<div><button class="speakbtn" onclick="playItem(\''+it.id+'\')">&#128266; Beluister</button>'+
+   '<button class="speakbtn" onclick="playItem(\''+it.id+'\',55)">&#128034; Traag</button></div>'+
    '<p class="tiny">Zeg de zin nu twee keer luidop na — echoing it aloud is what plants it.</p>'+
    '<div class="foot"><button class="btn primary" onclick="introDone(\''+it.id+'\')">Ik heb het luidop gezegd &rarr;</button></div>';
   document.getElementById('sess-prog').style.width=(QI/Q.length*100)+'%';
-  setTimeout(()=>speak(it.nl),350);
+  setTimeout(()=>playItem(it.id),350);
 }
 function introDone(id){
   const st=S.items[id]||(S.items[id]={intro:false,sk:{}});
@@ -930,15 +1023,15 @@ function renderListen(it,ex){
   opts.sort(()=>Math.random()-.5);
   ex.innerHTML=header('L')+
    '<p class="prompt">Luister. Wat betekent dit?</p>'+
-   '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Nog eens</button></div>'+
+   '<div><button class="speakbtn" onclick="playItem(\''+it.id+'\')">&#128266; Nog eens</button></div>'+
    '<div class="seg"><button onclick="listenAssist(\''+it.id+'\',this,\'slow\')">1 · Traag</button><button onclick="listenAssist(\''+it.id+'\',this,\'chunks\')">2 · Stukjes</button><button onclick="listenAssist(\''+it.id+'\',this,\'text\')">3 · Tekst</button></div><div id="lhelp"></div>'+
    '<div id="opts">'+opts.map(o=>'<button class="opt" onclick="pickL(this,\''+it.id+'\')">'+esc(o)+'</button>').join('')+'</div>'+
    '<div id="lz"></div><div class="foot" id="lfoot"></div>';
-  setTimeout(()=>speak(it.nl),300);
+  setTimeout(()=>playItem(it.id),300);
 }
 let lTried=false,lAssists=0;
 function listenAssist(id,btn,kind){
-  lAssists++; btn.classList.add('on'); const it=ITEMS[id],help=document.getElementById('lhelp');
+  lAssists++; S.stats.hints=(S.stats.hints||0)+1;btn.classList.add('on'); const it=ITEMS[id],help=document.getElementById('lhelp');
   if(kind==='slow'){speak(it.nl,60);help.innerHTML='<p class="tiny">Luister naar de beklemtoonde woorden. Probeer eerst de kern te begrijpen.</p>';}
   if(kind==='chunks'){
     const words=it.nl.split(' '), chunks=[]; for(let i=0;i<words.length;i+=3)chunks.push(words.slice(i,i+3).join(' '));
@@ -958,7 +1051,7 @@ function pickL(btn,id){
     btn.classList.add('wrong'); btn.onclick=null; lTried=true; speak(it.nl);
   }
 }
-function afterL(id){ const struggled=lTried||lAssists>1; if(struggled) logErr('L',id,''); grade(id,'L',lTried?0:(lAssists?3:4)); lTried=false;lAssists=0;stepDone(); }
+function afterL(id){ const struggled=lTried||lAssists>1;S.stats.listenTotal=(S.stats.listenTotal||0)+1;if(!lTried&&!lAssists)S.stats.listenNoHelp=(S.stats.listenNoHelp||0)+1;if(struggled) logErr('L',id,''); grade(id,'L',lTried?0:(lAssists?3:4)); lTried=false;lAssists=0;stepDone(); }
 
 /* --- typing: dictation (D) or production (P) --- */
 function renderType(it,ex,isDict){
@@ -966,14 +1059,14 @@ function renderType(it,ex,isDict){
   ex.innerHTML=header(k)+
    (isDict
      ? '<p class="prompt">Luister en typ wat ge hoort.</p>'+
-       '<div><button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Speel opnieuw</button>'+
-       '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'
+       '<div><button class="speakbtn" onclick="playItem(\''+it.id+'\')">&#128266; Speel opnieuw</button>'+
+       '<button class="speakbtn" onclick="playItem(\''+it.id+'\',55)">&#128034; Traag</button></div>'
      : '<p class="prompt">Zeg het in het Nederlands:</p><div class="big">'+esc(it.en)+'</div>')+
    '<input type="text" id="ans" autocomplete="off" autocapitalize="off" placeholder="Typ in het Nederlands…">'+
    '<div id="tz"></div>'+
    '<div class="foot" id="tfoot"><button class="btn primary" onclick="checkType(\''+it.id+'\',\''+k+'\')">Controleer</button>'+
    '<button class="btn ghost" onclick="revealType(\''+it.id+'\',\''+k+'\')">Ik weet het niet</button></div>';
-  if(isDict) setTimeout(()=>speak(it.nl),300);
+  if(isDict) setTimeout(()=>playItem(it.id),300);
   const inp=document.getElementById('ans');
   inp.focus();
   inp.onkeydown=e=>{if(e.key==='Enter')checkType(it.id,k);};
@@ -1019,10 +1112,11 @@ function renderSpeak(it,ex){
    (stage===0?'<div class="big">'+esc(it.nl)+'</div><div class="mid" style="color:var(--dim)">'+esc(it.en)+'</div>':'')+
    (stage===1?'<div class="big" id="hiddennl" style="filter:blur(9px)" onclick="this.style.filter=\'none\'">'+esc(it.nl)+'</div><p class="tiny">Tik op de zin als ge vastzit.</p>':'')+
    (stage===2?'<div class="big">'+esc(it.en)+'</div>':'')+
-   '<div>'+(stage<2?'<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Model</button>':'<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266; Hint (audio)</button>')+
-   '<button class="speakbtn" onclick="speak(ITEMS[\''+it.id+'\'].nl,55)">&#128034; Traag</button></div>'+
+   '<div>'+(stage<2?'<button class="speakbtn" onclick="playItem(\''+it.id+'\')">&#128266; Model</button>':'<button class="speakbtn" onclick="playItem(\''+it.id+'\')">&#128266; Hint (audio)</button>')+
+   '<button class="speakbtn" onclick="playItem(\''+it.id+'\',55)">&#128034; Traag</button></div>'+
    '<div id="miczone" class="center"><button class="mic" id="micbtn" onclick="toggleRecog(\''+it.id+'\')">&#127908;</button>'+
    '<p class="miclab" id="miclab">Tik en spreek de zin in</p></div>'+
+   (S.set.speechEndpoint?'<button class="btn ghost" onclick="startAcousticAssessment(\''+it.id+'\')">Nauwkeurige klankmeting · 4 sec opnemen</button><div id="acoustic"></div>':'')+
    '<div class="heard" id="heard"></div>'+
    '<div class="gradebar" id="sgrades">'+
      '<button class="btn g0" onclick="grade(\''+it.id+'\',\'S\',0);stepDone()">Opnieuw</button>'+
@@ -1030,7 +1124,7 @@ function renderSpeak(it,ex){
      '<button class="btn g4" onclick="grade(\''+it.id+'\',\'S\',4);stepDone()">Goed</button>'+
      '<button class="btn" onclick="grade(\''+it.id+'\',\'S\',5);stepDone()">Vlot</button>'+
    '</div>';
-  if(stage<2) setTimeout(()=>speak(it.nl),300);
+  if(stage<2) setTimeout(()=>playItem(it.id),300);
   if(!SR||recogFailed) mountVoiceField(it.id);
 }
 function showSpokenVerdict(id,txt){
@@ -1044,6 +1138,7 @@ function showSpokenVerdict(id,txt){
       ? '<span class="wok">'+esc(w)+'</span>'
       : '<span class="wno" onclick="wordDrill(\''+id+'\',\''+w+'\')">'+esc(w)+'</span>').join(' ')+'</div>'+
     '<div class="tiny">'+Math.round(score*100)+'% van de woorden herkend'+(score>=0.85?' — kies “Goed” of “Vlot”!':' — tik op een rood woord voor uitspraakhulp.')+'</div></div>'+
+    soundSignalHTML(missed)+
     '<div id="drill"></div>';
   return score;
 }
@@ -1087,6 +1182,24 @@ function toggleRecog(id){
   }catch(e){ recogFailed=true; mountVoiceField(id); }
 }
 
+async function startAcousticAssessment(id){
+  const out=document.getElementById('acoustic');
+  if(!navigator.mediaDevices||!window.MediaRecorder){out.innerHTML='<div class="banner">Deze browser kan geen audio opnemen.</div>';return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true}),chunks=[],rec=new MediaRecorder(stream);
+    out.innerHTML='<div class="tipbox"><b>Opname loopt…</b> Zeg de doelzin één keer natuurlijk.</div>';rec.ondataavailable=e=>chunks.push(e.data);
+    rec.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());out.innerHTML='<div class="tipbox">De klanken worden akoestisch geanalyseerd…</div>';
+      try{
+        const blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'}),form=new FormData();form.append('audio',blob,'speech.webm');form.append('target',ITEMS[id].nl);form.append('locale','nl-BE');form.append('itemId',id);
+        const r=await fetch(S.set.speechEndpoint,{method:'POST',body:form}),j=await r.json();if(!r.ok)throw new Error(j.error||('Fout '+r.status));
+        const phones=Array.isArray(j.phonemes)?j.phonemes:[];out.innerHTML='<div class="verdict '+((j.overall||0)>=75?'good':'near')+'"><b>Akoestische score: '+Math.round(j.overall||0)+'/100</b><div class="troublechips">'+phones.slice(0,8).map(p=>'<span class="tchip">'+esc(String(p.phoneme||p.sound||'?'))+' · '+Math.round(p.score||0)+'</span>').join('')+'</div>'+(j.feedback?'<p class="tiny">'+esc(String(j.feedback))+'</p>':'')+'<p class="tiny">Service: '+esc(String(j.provider||'configured endpoint'))+'. Gebruik scores alleen wanneer de dienst aantoonbaar Nederlands en niet-moedertaalsprekers valideert.</p></div>';
+      }catch(e){out.innerHTML='<div class="banner">'+esc(e.message||'Klankanalyse mislukt.')+'</div>';}
+    };
+    rec.start();setTimeout(()=>{if(rec.state==='recording')rec.stop();},4000);
+  }catch(e){out.innerHTML='<div class="banner">Microfoontoegang is nodig voor akoestische analyse.</div>';}
+}
+
 
 /* ================= pronunciation coaching ================= */
 const PRON=[
@@ -1110,6 +1223,13 @@ const PRON=[
 function tipsFor(word){ return PRON.filter(p=>p.re.test(word)).slice(0,2); }
 function troubleBump(word){
   tipsFor(word).forEach(p=>{ S.trouble[p.k]=(S.trouble[p.k]||0)+1; });
+}
+function soundSignalHTML(missed){
+  if(!missed||!missed.length)return '';
+  const seen=new Set(),signals=[];
+  missed.forEach(w=>tipsFor(w).forEach(p=>{if(!seen.has(p.k)){seen.add(p.k);signals.push({p,w});}}));
+  if(!signals.length)return '';
+  return '<div class="tipbox"><b>Mogelijke klanksignalen</b>'+signals.slice(0,3).map(x=>'<div style="margin-top:7px"><span class="tchip">'+esc(x.p.name)+'</span> in <b>'+esc(x.w)+'</b> · '+x.p.tip+'</div>').join('')+'<p class="tiny">Dit is transparante woord- en spellinganalyse op basis van wat de browser verstond, geen akoestische fonemenscore. Gebruik de opnamevergelijking voor ritme en klank.</p></div>';
 }
 function labExamples(p){
   const out=[], seen=new Set();
@@ -1255,7 +1375,7 @@ function renderCoach(){
   // 4. hardest sentences
   const hs=topN(d.perSent,5).filter(e=>e[1]>=2);
   if(hs.length) html+='<div class="card"><div class="eyebrow">Uw lastigste zinnen</div>'+
-    hs.map(e=>{const it=ITEMS[e[0]];return '<div class="listitem"><div><div class="t">'+esc(it.nl)+'</div><div class="s">'+e[1]+'&times; gemist &middot; '+esc(it.en)+'</div></div><button class="speakbtn small" onclick="speak(ITEMS[\''+e[0]+'\'].nl,60)">&#128266;</button></div>';}).join('')+
+    hs.map(e=>{const it=ITEMS[e[0]];return '<div class="listitem"><div><div class="t">'+esc(it.nl)+'</div><div class="s">'+e[1]+'&times; gemist &middot; '+esc(it.en)+'</div></div><button class="speakbtn small" onclick="playItem(\''+e[0]+'\',60)">&#128266;</button></div>';}).join('')+
     '<p class="tiny" style="margin-top:8px">Deze komen vanzelf sneller terug in uw sessies &mdash; de herhaling regelt dat.</p></div>';
   z.innerHTML=html;
 }
@@ -1294,6 +1414,103 @@ async function askAI(){
   btn.disabled=false; btn.textContent='Vraag de AI-coach';
 }
 
+/* ================= level-aware AI conversation ================= */
+const AI_SCENARIOS={
+ daily:{title:'Dagelijks leven',opening:'Ge staat bij de bakker. Ik ben de medewerker. Goeiemorgen, wat mag het zijn?',role:'a friendly service worker in Belgium'},
+ work:{title:'Werkgesprek',opening:'Goedemorgen. Kunt u kort uitleggen wat vandaag uw belangrijkste prioriteit is?',role:'a supportive Belgian colleague'},
+ social:{title:'Vrij gesprek',opening:'Dag Carlos! Hoe is uw week tot nu toe verlopen?',role:'a friendly neighbour in Belgium'},
+ challenge:{title:'Mening en discussie',opening:'Sommige mensen vinden dat iedereen minstens drie dagen per week op kantoor moet werken. Wat vindt u?',role:'a respectful discussion partner'}
+};
+let AIC={level:'A1',scenario:'daily',turns:[],busy:false,rec:null};
+function openAIConversation(){
+  AIC={level:currentBand().level,scenario:S.profile.goal==='work'?'work':'daily',turns:[],busy:false,rec:null};go('airoom');renderAISetup();
+}
+function stopAIConversation(){if(AIC.rec)try{AIC.rec.abort();}catch(e){}if('speechSynthesis'in window)speechSynthesis.cancel();}
+function renderAISetup(){
+  document.getElementById('ailevel').textContent=AIC.level;
+  document.getElementById('aichat').innerHTML='';document.getElementById('aicomposer').innerHTML='';
+  document.getElementById('aisetup').innerHTML='<div class="card"><div class="eyebrow">Kies het gesprek</div><label class="tog">Niveau</label><div class="seg" id="ailevels">'+['A1','A2','B1','B2'].map(l=>'<button class="'+(l===AIC.level?'on':'')+'" onclick="AIC.level=\''+l+'\';renderAISetup()">'+l+'</button>').join('')+'</div><label class="tog">Situatie</label><select id="aiscenario" style="width:100%;background:var(--ink3);color:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit">'+Object.entries(AI_SCENARIOS).map(([k,v])=>'<option value="'+k+'" '+(k===AIC.scenario?'selected':'')+'>'+esc(v.title)+'</option>').join('')+'</select><p class="tiny">De leraar blijft op uw niveau, reageert op uw betekenis en geeft na elke beurt één gerichte verbetering. Het gesprek beoordeelt taak, begrijpelijkheid, grammatica, woordenschat en vlotheid apart.</p>'+(!S.set.gkey&&!S.set.aiEndpoint?'<div class="banner">Voeg eerst een Gemini-sleutel of veilige AI-endpoint toe in Instellingen. Gewone spreekmissies blijven zonder AI werken.</div>':'')+'<button class="btn primary" style="margin-top:12px" '+(!S.set.gkey&&!S.set.aiEndpoint?'disabled':'')+' onclick="AIC.scenario=document.getElementById(\'aiscenario\').value;startAIConversation()">Begin gesprek</button></div>';
+}
+function startAIConversation(){
+  const sc=AI_SCENARIOS[AIC.scenario];AIC.turns=[{role:'assistant',text:sc.opening}];document.getElementById('aisetup').innerHTML='';
+  renderAIChat();renderAIComposer();speak(sc.opening,88);
+}
+function renderAIChat(){
+  document.getElementById('aichat').innerHTML=AIC.turns.map(t=>'<div class="bubble '+(t.role==='user'?'me':'them')+'"><small>'+(t.role==='user'?'Gij':'Leraar')+'</small>'+esc(t.text)+(t.feedback?'<div class="tiny" style="margin-top:7px">'+esc(t.feedback)+'</div>':'')+'</div>').join('');
+  setTimeout(()=>scrollTo(0,document.body.scrollHeight),30);
+}
+function renderAIComposer(){
+  document.getElementById('aicomposer').innerHTML='<div class="card"><div class="eyebrow">Uw beurt</div><button class="mic" style="width:66px;height:66px;font-size:26px;margin-top:12px" id="aimic" onclick="aiListen()">🎙</button><p class="miclab" id="ailab">Antwoord hardop of typ hieronder.</p><textarea id="aiinput" rows="3" placeholder="Uw antwoord in het Nederlands…"></textarea><button class="btn primary" style="margin-top:10px" id="aisend" onclick="aiTurn(document.getElementById(\'aiinput\').value)">Stuur mijn antwoord</button><button class="btn ghost" onclick="finishAIConversation()">Rond gesprek af</button><div id="aiturnfeedback"></div></div>';
+}
+function aiListen(){
+  const lab=document.getElementById('ailab');if(!SR){lab.textContent='Gebruik de microfoon van uw toetsenbord.';document.getElementById('aiinput').focus();return;}
+  try{const r=new SR();AIC.rec=r;r.lang=(VOICE&&/be/i.test(VOICE.lang))?'nl-BE':'nl-NL';r.interimResults=false;r.maxAlternatives=3;r.onstart=()=>lab.textContent='Ik luister…';r.onerror=()=>{lab.textContent='Niet gelukt; gebruik de microfoon van uw toetsenbord.';};r.onresult=e=>{const text=e.results[0][0].transcript;document.getElementById('aiinput').value=text;lab.textContent='Gehoord: '+text;};r.start();}catch(e){lab.textContent='Gebruik de microfoon van uw toetsenbord.';}
+}
+async function callTutorAI(prompt){
+  if(S.set.aiEndpoint){
+    const r=await fetch(S.set.aiEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,app:'vlot',version:6})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||j.error||('Fout '+r.status));return j.text||j.output||j.response||JSON.stringify(j);
+  }
+  let last='Geen AI-model beschikbaar.';
+  for(const m of GMODELS){
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(S.set.gkey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:.55}})});
+    if(r.status===404)continue;const j=await r.json();if(!r.ok){last=(j.error&&j.error.message)||('Fout '+r.status);break;}
+    const txt=(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('');if(txt)return txt;
+  }throw new Error(last);
+}
+function parseTutorJSON(txt){
+  try{return JSON.parse(txt);}catch(e){const m=txt.match(/\{[\s\S]*\}/);if(m)try{return JSON.parse(m[0]);}catch(x){}throw new Error('De leraar gaf geen geldig antwoord.');}
+}
+async function aiTurn(answer){
+  answer=(answer||'').trim();if(!answer||AIC.busy)return;AIC.busy=true;
+  AIC.turns.push({role:'user',text:answer});renderAIChat();document.getElementById('aisend').disabled=true;document.getElementById('ailab').textContent='De leraar denkt en luistert naar uw taal…';
+  const sc=AI_SCENARIOS[AIC.scenario],history=AIC.turns.slice(-10).map(t=>({role:t.role,text:t.text}));
+  const prompt='You are Vlot, an expert, warm teacher of Belgian Dutch. Conduct a realistic roleplay as '+sc.role+'. The learner is at CEFR '+AIC.level+'. Stay within that level and continue the SAME situation. Evaluate the learner message primarily for communicative success, not native-like perfection. Correct only the single error that most improves comprehensibility or level progression. Flemish forms may be accepted but do not force dialect. Return ONLY valid JSON with keys: reply_nl (your natural next turn in Dutch), feedback_en (one concise explanation in English), better_nl (a natural improved version of the learner answer, or the unchanged answer if already good), scores (object with task, comprehensibility, grammar, vocabulary, fluency integers 0-100), focus (one short Dutch label). Never claim to acoustically score pronunciation; transcript-based fluency is only an estimate. Conversation JSON:\n'+JSON.stringify(history);
+  try{
+    const data=parseTutorJSON(await callTutorAI(prompt));const scores=data.scores||{};
+    AIC.turns.push({role:'assistant',text:data.reply_nl||'Vertel gerust verder.',feedback:data.feedback_en||''});
+    if(!S.stats.aiScores)S.stats.aiScores=[];S.stats.aiScores.push({t:Date.now(),level:AIC.level,scenario:AIC.scenario,scores});if(S.stats.aiScores.length>100)S.stats.aiScores=S.stats.aiScores.slice(-100);save();
+    renderAIChat();renderAIComposer();
+    document.getElementById('aiturnfeedback').innerHTML='<div class="verdict '+((scores.comprehensibility||0)>=75?'good':'near')+'"><b>'+(data.focus?esc(data.focus):'Gerichte feedback')+'</b><p style="margin-top:6px">'+esc(data.feedback_en||'Uw boodschap was duidelijk.')+'</p><div class="target">'+esc(data.better_nl||answer)+'</div><div class="tiny">Taak '+(scores.task||'–')+' · Begrijpelijk '+(scores.comprehensibility||'–')+' · Grammatica '+(scores.grammar||'–')+' · Woordenschat '+(scores.vocabulary||'–')+' · Vlotheid* '+(scores.fluency||'–')+'</div><p class="tiny">*Vlotheid is hier alleen uit het transcript afgeleid, niet akoestisch gemeten.</p></div>';
+    speak(data.reply_nl||'Vertel gerust verder.',88);
+  }catch(e){renderAIComposer();document.getElementById('aiturnfeedback').innerHTML='<div class="banner">'+esc(e.message||'AI-verbinding mislukt.')+'</div>';}
+  AIC.busy=false;
+}
+function finishAIConversation(){
+  const userTurns=AIC.turns.filter(t=>t.role==='user').length;if(userTurns){S.sessions.push({t:Date.now(),minutes:Math.max(1,userTurns*2),xp:0,steps:userTurns,type:'ai-conversation'});save();}
+  document.getElementById('aichat').innerHTML='';document.getElementById('aicomposer').innerHTML='<div class="done-big">💬</div><h2 class="big center">Gesprek afgerond</h2><p class="sub center">'+userTurns+' spontane beurten geoefend. Herhaal later hetzelfde onderwerp en probeer langere antwoorden te geven.</p><div class="foot"><button class="btn primary" onclick="openAIConversation()">Nieuw gesprek</button><button class="btn ghost" onclick="go(\'home\')">Naar overzicht</button></div>';
+}
+
+/* ================= measured learner outcomes ================= */
+let CP={i:0,total:0,per:{A1:[0,0],A2:[0,0],B1:[0,0],B2:[0,0]}};
+function pct(n,d){return d?Math.round(n/d*100):0;}
+function avg(arr,key){if(!arr.length)return 0;return arr.reduce((n,x)=>n+(key?key(x):x),0)/arr.length;}
+function renderOutcomes(){
+  const attempts=S.stats.attempts||{},success=S.stats.success||{},total=SKILLS.reduce((n,k)=>n+(attempts[k]||0),0),right=SKILLS.reduce((n,k)=>n+(success[k]||0),0);
+  const listen=pct(S.stats.listenNoHelp||0,S.stats.listenTotal||0),missions=Math.round(avg(S.stats.missionScores||[],x=>x.score)*100),done=CURRICULUM.flatMap(c=>c.can).filter(canDoDone).length,all=CURRICULUM.flatMap(c=>c.can).length;
+  const latest=S.checkpoints[S.checkpoints.length-1],first=S.checkpoints[0],delta=latest&&first&&latest!==first?latest.score-first.score:null;
+  const metric=(label,value,sub)=>'<div class="stat" style="min-width:46%"><b>'+value+'</b><span>'+label+'</span><p class="tiny">'+sub+'</p></div>';
+  document.getElementById('outcomezone').innerHTML='<div class="statrow" style="flex-wrap:wrap">'+metric('duurzaam ophalen',pct(right,total)+'%','Alle vaardigheden, na geplande herhaling')+metric('luisteren zonder hulp',listen+'%','Juist zonder traag, stukjes of tekst')+metric('spreekmissies',missions?missions+'%':'–','Communicatieve overeenkomst, geen accentmeting')+metric('kan-doelen',done+'/'+all,'Aangetoond over meerdere vaardigheden')+'</div>'+
+   '<div class="card"><div class="eyebrow">CEFR-voortgangsmeting</div>'+(latest?'<div class="levelrow"><div class="levelbadge">'+latest.score+'</div><div class="levelcopy"><b>Laatste meting · '+new Date(latest.t).toLocaleDateString()+'</b><p>van 12 taken'+(delta!==null?' · '+(delta>=0?'+':'')+delta+' sinds de eerste meting':' · dit is uw nulmeting')+'</p></div></div><div style="margin-top:10px">'+Object.entries(latest.per).map(([l,v])=>'<div class="cando"><div class="check">'+l+'</div><div style="flex:1"><b>'+v[0]+'/'+v[1]+' juist</b><div class="meter"><i style="width:'+pct(v[0],v[1])+'%"></i></div></div></div>').join('')+'</div>':'<p style="margin-top:8px">Maak een nulmeting. Herhaal ongeveer elke vier weken met dezelfde vaardigheidstypen om verandering zichtbaar te maken.</p>')+'<button class="btn primary" style="margin-top:14px" onclick="startCheckpoint()">'+(latest?'Nieuwe meting':'Maak mijn nulmeting')+'</button><p class="tiny">Dit is een interne voortgangsmeting, geen officieel CEFR-certificaat.</p></div>'+
+   '<div class="card"><div class="eyebrow">Datakwaliteit</div><p style="margin-top:8px">Vlot scheidt activiteit (XP en minuten) van uitkomsten. Betrouwbaarheid groeit wanneer ge taken na een pauze opnieuw doet. Browsertranscriptie kan uitspraakproblemen signaleren, maar niet bewijzen welk foneem akoestisch fout was.</p></div>';
+}
+function startCheckpoint(){CP={i:0,total:0,per:{A1:[0,0],A2:[0,0],B1:[0,0],B2:[0,0]}};go('checkpoint');renderCheckpoint();}
+function checkpointLevel(i){return ['A1','A2','B1','B2'][Math.min(3,Math.floor(i/3))];}
+function renderCheckpoint(){
+  const q=PLACEMENT[CP.i],level=checkpointLevel(CP.i);document.getElementById('checkpointcount').textContent=(CP.i+1)+'/'+PLACEMENT.length;
+  document.getElementById('checkpointzone').innerHTML='<span class="skillchip">'+level+'</span><h2 class="big">'+esc(q.q)+'</h2><p class="sub">Antwoord zonder externe hulp; zo blijft de vergelijking bruikbaar.</p><div style="margin-top:14px">'+q.opts.map((o,i)=>'<button class="opt" onclick="answerCheckpoint('+i+')">'+esc(o)+'</button>').join('')+'</div>';
+  if(q.audio)setTimeout(()=>speak(q.audio,88),250);
+}
+function answerCheckpoint(i){
+  const q=PLACEMENT[CP.i],level=checkpointLevel(CP.i),ok=i===q.a;CP.per[level][1]++;if(ok){CP.total++;CP.per[level][0]++;}
+  document.querySelectorAll('#checkpointzone .opt').forEach((b,x)=>{b.onclick=null;if(x===q.a)b.classList.add('right');else if(x===i)b.classList.add('wrong');});
+  const next=document.createElement('button');next.className='btn primary';next.style.marginTop='16px';next.textContent=CP.i===PLACEMENT.length-1?'Bekijk resultaat':'Volgende';next.onclick=()=>{CP.i++;if(CP.i<PLACEMENT.length)renderCheckpoint();else finishCheckpoint();};document.getElementById('checkpointzone').appendChild(next);
+}
+function finishCheckpoint(){
+  const result={t:Date.now(),score:CP.total,total:PLACEMENT.length,per:CP.per};S.checkpoints.push(result);if(S.checkpoints.length>24)S.checkpoints=S.checkpoints.slice(-24);save();
+  document.getElementById('checkpointcount').textContent='Klaar';document.getElementById('checkpointzone').innerHTML='<div class="done-big">📈</div><h2 class="big center">'+CP.total+' van '+PLACEMENT.length+'</h2><p class="sub center">Uw meetpunt is opgeslagen. De trend over meerdere metingen is belangrijker dan één score.</p><div class="foot"><button class="btn primary" onclick="go(\'outcomes\')">Bekijk mijn resultaten</button></div>';
+}
+
 /* ================= real-world speaking missions ================= */
 let M={mission:null,i:0,answers:[],rec:null};
 function openMissions(){
@@ -1303,7 +1520,7 @@ function openMissions(){
   }).join(''); go('missions');
 }
 function startMission(id){
-  M={mission:MISSIONS.find(x=>x.id===id),i:0,answers:[],rec:null}; go('mission');renderMission();
+  M={mission:MISSIONS.find(x=>x.id===id),i:0,answers:[],qualities:[],rec:null}; go('mission');renderMission();
 }
 function renderMission(){
   const m=M.mission,t=m.turns[M.i];
@@ -1317,6 +1534,7 @@ function renderMission(){
 }
 function missionHint(){
   const t=M.mission.turns[M.i],first=t.model.split(' ').slice(0,3).join(' ');
+  S.stats.hints=(S.stats.hints||0)+1;
   document.getElementById('missionfeedback').innerHTML='<div class="tipbox">Begin zo: <b>'+esc(first)+'…</b></div>';
   speak(first,70);
 }
@@ -1341,15 +1559,16 @@ function missionQuality(t,answer){
 function missionSubmit(answer){
   if(!answer.trim())return;
   const t=M.mission.turns[M.i],q=missionQuality(t,answer),good=q>=.52;
-  M.pending=answer.trim();
+  M.pending=answer.trim();M.pendingQuality=q;
   document.getElementById('missionfeedback').innerHTML='<div class="verdict '+(good?'good':'near')+'"><b>'+(good?'Goed gereageerd.':'Dat werkt bijna.')+'</b><div class="tiny">Een natuurlijk modelantwoord:</div><div class="target">'+esc(t.model)+'</div>'+(good?'<div class="tiny">Uw boodschap is duidelijk. Let nu op ritme en spreek zonder te lezen.</div>':'<div class="tiny">Vergelijk de sleutelwoorden en probeer het model één keer hardop.</div>')+'</div>'+
    '<button class="speakbtn" onclick="speak(M.mission.turns[M.i].model,75)">🔊 Luister</button><button class="btn primary" style="margin-top:12px" onclick="missionNext()">'+(M.i===M.mission.turns.length-1?'Missie afronden':'Ga verder →')+'</button>';
   speak(t.model,75);
 }
 function missionNext(){
-  M.answers[M.i]=M.pending||M.mission.turns[M.i].model; M.i++;
+  M.answers[M.i]=M.pending||M.mission.turns[M.i].model;M.qualities[M.i]=M.pendingQuality||0; M.i++;
   if(M.i<M.mission.turns.length)return renderMission();
-  const m=M.mission,old=S.missions[m.id]||{count:0}; old.count++;old.last=Date.now();S.missions[m.id]=old;S.xp+=25;bumpStreak();save();
+  const m=M.mission,old=S.missions[m.id]||{count:0}; old.count++;old.last=Date.now();S.missions[m.id]=old;S.xp+=25;
+  S.stats.missionScores.push({t:Date.now(),id:m.id,score:M.qualities.reduce((a,b)=>a+b,0)/M.qualities.length});if(S.stats.missionScores.length>100)S.stats.missionScores=S.stats.missionScores.slice(-100);bumpStreak();save();
   document.getElementById('missioncount').textContent='Klaar';
   document.getElementById('missionzone').innerHTML='<div class="done-big">🎯</div><h2 class="big center">Missie geslaagd</h2><p class="sub center">Ge hebt '+m.turns.length+' spontane antwoorden gegeven. Dat is de brug van kennen naar kunnen.</p><div class="card"><div class="eyebrow">Volgende stap</div><p style="margin-top:8px">Doe dezelfde missie later nog eens, maar kijk pas naar het model nadat ge geantwoord hebt. Probeer elke keer iets vrijer te spreken.</p></div><div class="foot"><button class="btn primary" onclick="startMission(\''+m.id+'\')">Nog eens, iets vlotter</button><button class="btn" onclick="openMissions()">Andere missie</button><button class="btn ghost" onclick="go(\'home\')">Naar overzicht</button></div>';
 }
@@ -1360,17 +1579,17 @@ function renderUnits(){
   el.innerHTML=COURSE.units.map(u=>{
     const learned=u.items.filter(i=>S.items[i.id]&&S.items[i.id].intro).length;
     return '<button class="listitem" style="width:100%" onclick="openUnit(\''+u.id+'\')">'+
-      '<div style="text-align:left"><div class="t">'+esc(u.title)+'</div><div class="s">'+esc(u.en)+' · '+learned+'/'+u.items.length+' geleerd</div></div>'+
+      '<div style="text-align:left"><div class="t">'+esc(u.title)+'</div><div class="s">'+(LEVEL_BY_UNIT[u.id]||'A1')+' · '+esc(u.en)+' · '+learned+'/'+u.items.length+' geleerd</div></div>'+
       '<span class="chev">&#8250;</span></button>';
   }).join('');
 }
 function openUnit(uid){
   const u=COURSE.units.find(x=>x.id===uid);
   document.getElementById('unitdetail').innerHTML=
-   '<div class="eyebrow">'+esc(u.en)+'</div><h2 class="big">'+esc(u.title)+'</h2><p class="sub">'+esc(u.scene)+'</p>'+
+   '<div class="eyebrow">'+(LEVEL_BY_UNIT[u.id]||'A1')+' · '+esc(u.en)+'</div><h2 class="big">'+esc(u.title)+'</h2><p class="sub">'+esc(u.scene)+'</p>'+
    '<div class="card">'+u.items.map(it=>
      '<div class="listitem"><div><div class="t">'+esc(it.nl)+'</div><div class="s">'+esc(it.en)+'</div>'+(it.note?'<div class="s" style="color:var(--leeuw)">'+esc(it.note)+'</div>':'')+'</div>'+
-     '<button class="speakbtn small" onclick="speak(ITEMS[\''+it.id+'\'].nl)">&#128266;</button></div>').join('')+'</div>';
+     '<button class="speakbtn small" onclick="playItem(\''+it.id+'\')">&#128266;</button></div>').join('')+'</div>';
   go('unit');
 }
 
@@ -1398,7 +1617,7 @@ function shRender(){
 }
 function shPlay(){
   const it=SH.u.items[SH.i];
-  speak(it.nl,SH.rate,()=>{ if(SH.loop) setTimeout(()=>{ if(SH.loop) shPlay(); },900); });
+  playItem(it.id,SH.rate,()=>{ if(SH.loop) setTimeout(()=>{ if(SH.loop) shPlay(); },900); });
 }
 function shPrev(){SH.i=(SH.i-1+SH.u.items.length)%SH.u.items.length;shRender();shPlay();}
 function shNext(){SH.i=(SH.i+1)%SH.u.items.length;shRender();shPlay();}
@@ -1438,6 +1657,9 @@ function renderSettings(){
   const r=document.getElementById('set-rate'); r.value=S.set.rate;
   document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';
   r.oninput=e=>{S.set.rate=+e.target.value;document.getElementById('set-ratelab').textContent=(S.set.rate/100).toFixed(2)+'×';save();};
+  const voice=document.getElementById('set-voice'),voices=('speechSynthesis'in window)?speechSynthesis.getVoices().filter(v=>/^nl/i.test(v.lang)):[];
+  voice.innerHTML='<option value="">Automatisch · liefst Belgisch</option>'+voices.map(v=>'<option value="'+escAttr(v.name)+'">'+esc(v.name)+' · '+esc(v.lang)+'</option>').join('');voice.value=S.set.voice||'';
+  voice.onchange=e=>{S.set.voice=e.target.value;pickVoice();save();};
   const a=document.getElementById('set-acc'); a.checked=S.set.acc;
   a.onchange=e=>{S.set.acc=e.target.checked;save();};
   const n=document.getElementById('set-new'); n.value=S.set.perNew;
@@ -1445,6 +1667,8 @@ function renderSettings(){
   n.oninput=e=>{S.set.perNew=+e.target.value;document.getElementById('set-newlab').textContent=S.set.perNew;save();};
   const g=document.getElementById('set-gkey'); g.value=S.set.gkey||'';
   g.onchange=e=>{S.set.gkey=e.target.value.trim();save();};
+  const ep=document.getElementById('set-aiendpoint');ep.value=S.set.aiEndpoint||'';ep.onchange=e=>{S.set.aiEndpoint=e.target.value.trim();save();};
+  const sp=document.getElementById('set-speechendpoint');sp.value=S.set.speechEndpoint||'';sp.onchange=e=>{S.set.speechEndpoint=e.target.value.trim();save();};
 }
 function doExport(){
   const blob=new Blob([JSON.stringify(S)],{type:'application/json'});
